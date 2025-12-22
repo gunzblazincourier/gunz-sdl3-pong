@@ -13,8 +13,10 @@ static const int WINDOW_HEIGHT = 480;
 
 enum Directions {UP = 1, DOWN = -1, ZERO = 0};
 static enum Directions dir = ZERO;
+static enum Directions dir2 = UP;
 
 static float s_player_y_coordinate = 100;
+static float s_cpu_y_coordinate = 100;
 
 /* We will use this renderer to draw into this window every frame. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
@@ -71,8 +73,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const float elapsed = ((float) (now - last_time)) / 1000.0f;
 
     SDL_FRect rect;
-    std::cout << dir << std::endl;
-    std::cout << std::endl;
+    SDL_FRect rect2;
+    // std::cout << dir << std::endl;
+    // std::cout << std::endl;
 
     /* as you can see from this, rendering draws over whatever was drawn before it. */
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
@@ -100,6 +103,22 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         s_player_y_coordinate -= 250*dir*elapsed;
     }
     SDL_RenderFillRect(renderer, &rect);
+
+    /* draw player 2 rectangle. */
+    rect2.x = WINDOW_WIDTH - 20;
+    rect2.y = s_cpu_y_coordinate;
+    rect2.w = 10;
+    rect2.h = 60;
+
+    s_cpu_y_coordinate -= 250*dir2*elapsed;
+    if (s_cpu_y_coordinate < 0) {
+        dir2 = DOWN;
+    }
+    
+    if (s_cpu_y_coordinate > WINDOW_HEIGHT-rect2.h) {
+        dir2 = UP;
+    }
+    SDL_RenderFillRect(renderer, &rect2);
 
     // /* draw a unfilled rectangle in-set a little bit. */
     // SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);  /* green, full alpha */
