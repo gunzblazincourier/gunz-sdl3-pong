@@ -91,7 +91,14 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // } else if (dir == DOWN) {
     //     rect.y -= 10;
     // }
-    s_player_y_coordinate += 250*dir*elapsed;
+
+    if (s_player_y_coordinate < 0) {
+        s_player_y_coordinate = 0;
+    } else if (s_player_y_coordinate > WINDOW_HEIGHT-rect.h) {
+        s_player_y_coordinate = WINDOW_HEIGHT-rect.h;
+    } else {
+        s_player_y_coordinate -= 250*dir*elapsed;
+    }
     SDL_RenderFillRect(renderer, &rect);
 
     // /* draw a unfilled rectangle in-set a little bit. */
