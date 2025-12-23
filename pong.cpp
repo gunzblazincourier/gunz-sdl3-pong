@@ -14,9 +14,13 @@ static const int WINDOW_HEIGHT = 480;
 enum Directions {UP = 1, DOWN = -1, ZERO = 0};
 static enum Directions dir = ZERO;
 static enum Directions dir2 = UP;
+static enum Directions dirball_x = UP;
+static enum Directions dirball_y = DOWN;
 
 static float s_player_y_coordinate = 100;
 static float s_cpu_y_coordinate = 100;
+static float s_ball_x_coordinate = 200;
+static float s_ball_y_coordinate = 200;
 
 /* We will use this renderer to draw into this window every frame. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
@@ -74,6 +78,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     SDL_FRect rect;
     SDL_FRect rect2;
+    SDL_FRect rect3;
     // std::cout << dir << std::endl;
     // std::cout << std::endl;
 
@@ -119,6 +124,23 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         dir2 = UP;
     }
     SDL_RenderFillRect(renderer, &rect2);
+
+    /* Draw ball */
+    rect3.x = s_ball_x_coordinate;
+    rect3.y = s_ball_y_coordinate;
+    rect3.w = 10;
+    rect3.h = 10;
+
+    s_ball_x_coordinate -= 100*dirball_x*elapsed;
+    s_ball_y_coordinate -= 100*dirball_y*elapsed;
+    // if (s_cpu_y_coordinate < 0) {
+    //     dir2 = DOWN;
+    // }
+    
+    // if (s_cpu_y_coordinate > WINDOW_HEIGHT-rect2.h) {
+    //     dir2 = UP;
+    // }
+    SDL_RenderFillRect(renderer, &rect3);
 
     // /* draw a unfilled rectangle in-set a little bit. */
     // SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);  /* green, full alpha */
