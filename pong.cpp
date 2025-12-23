@@ -12,15 +12,23 @@ static const int WINDOW_WIDTH = 640;
 static const int WINDOW_HEIGHT = 480;
 
 enum Directions {UP = 1, DOWN = -1, ZERO = 0};
-static enum Directions dir = ZERO;
-static enum Directions dir2 = UP;
-static enum Directions dirball_x = UP;
-static enum Directions dirball_y = DOWN;
+static Directions dir = ZERO;
+static Directions dir2 = UP;
+static Directions dirball_x = UP;
+static Directions dirball_y = DOWN;
 
 static float s_player_y_coordinate = 100;
 static float s_cpu_y_coordinate = 100;
 static float s_ball_x_coordinate = 200;
 static float s_ball_y_coordinate = 200;
+
+void flip_direction(Directions& d) {
+    if (d == UP) {
+        d = DOWN;
+    } else if (d == DOWN) {
+        d = UP;
+    }
+}
 
 /* We will use this renderer to draw into this window every frame. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
@@ -92,7 +100,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect.y = s_player_y_coordinate;
     rect.w = 10;
     rect.h = 60;
-    std::cout << rect.y << std::endl;
+
+    float rect_start = rect.y + rect.w + 4;
+    float rect_end = rect_start + rect.h - 4;
+    // std::cout << rect.y << std::endl;
 
     // if (dir == UP) {
     //     rect.y += 10;
@@ -115,6 +126,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect2.w = 10;
     rect2.h = 60;
 
+    float rect2_start = rect2.y + 4;
+    float rect2_end = rect2_start + rect2.h - 4;
+
     s_cpu_y_coordinate -= 250*dir2*elapsed;
     if (s_cpu_y_coordinate < 0) {
         dir2 = DOWN;
@@ -133,6 +147,18 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     s_ball_x_coordinate -= 100*dirball_x*elapsed;
     s_ball_y_coordinate -= 100*dirball_y*elapsed;
+    std::cout << dirball_x << std::endl;
+    std::cout << dirball_y << std::endl;
+    std::cout << std::endl;
+
+    if (s_ball_x_coordinate < rect.x) {
+        if (s_ball_y_coordinate > rect_start and s_ball_y_coordinate < rect_end) {
+            // dirball_x = DOWN;
+            // dirball_y = UP;
+            flip_direction(dirball_x);
+            flip_direction(dirball_y);
+        }
+    }
     // if (s_cpu_y_coordinate < 0) {
     //     dir2 = DOWN;
     // }
