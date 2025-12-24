@@ -19,8 +19,12 @@ static Directions dirball_y = DOWN;
 
 static float s_player_y_coordinate = 100;
 static float s_cpu_y_coordinate = 100;
-static float s_ball_x_coordinate = 200;
-static float s_ball_y_coordinate = 200;
+static float s_ball_x_coordinate = WINDOW_WIDTH/2;
+static float s_ball_y_coordinate = WINDOW_HEIGHT/2;
+static float ballspeedratio_x = SDL_randf();
+
+static int score_player = 0;
+static int score_cpu = 0;
 
 void flip_direction(Directions& d) {
     if (d == UP) {
@@ -145,8 +149,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect3.w = 10;
     rect3.h = 10;
 
-    s_ball_x_coordinate -= 150*dirball_x*elapsed;
-    s_ball_y_coordinate -= 150*dirball_y*elapsed;
+    float ballspeedratio_y = 1 - ballspeedratio_x;
+    s_ball_x_coordinate -= 300*dirball_x*ballspeedratio_x*elapsed;
+    s_ball_y_coordinate -= 300*dirball_y*ballspeedratio_y*elapsed;
     // std::cout << dirball_x << std::endl;
     // std::cout << dirball_y << std::endl;
     // std::cout << std::endl;
@@ -175,6 +180,20 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         flip_direction(dirball_y);
     }
 
+    if (s_ball_x_coordinate < -20) {
+        s_ball_x_coordinate = WINDOW_WIDTH/2;
+        s_ball_y_coordinate = WINDOW_HEIGHT/2;
+        ballspeedratio_x = SDL_randf();
+        score_cpu++;
+    }
+
+    if (s_ball_x_coordinate > WINDOW_WIDTH + 20) {
+        s_ball_x_coordinate = WINDOW_WIDTH/2;
+        s_ball_y_coordinate = WINDOW_HEIGHT/2;
+        ballspeedratio_x = SDL_randf();
+        score_player++;
+    }
+
     // if (s_cpu_y_coordinate < 0) {
     //     dir2 = DOWN;
     // }
@@ -192,16 +211,25 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // rect.h -= 60;
     // SDL_RenderRect(renderer, &rect);
 
-    last_time = now;
+
+
+    // if (s_ball_x_coordinate < 0) {
+    //     score_player++;
+    // }
+
+    // if (s_ball_x_coordinate > WINDOW_WIDTH) {
+    //     score_cpu++;
+    // }
 
     SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-    SDL_RenderDebugText(renderer, WINDOW_WIDTH/4, 100, "00");
-    SDL_RenderDebugText(renderer, 3*WINDOW_WIDTH/4, 100, "00");
+    SDL_RenderDebugTextFormat(renderer, WINDOW_WIDTH/4, 100, "%d", score_player);
+    SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", score_cpu);
 
     for (int i = 0; i < WINDOW_HEIGHT; i += 10) {
         SDL_RenderPoint(renderer, WINDOW_WIDTH/2, i);
     }
-    
+
+    last_time = now;
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
