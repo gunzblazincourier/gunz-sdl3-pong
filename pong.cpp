@@ -154,8 +154,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         ballspeedratio_x = SDL_randf();
     }
     float ballspeedratio_y = 1 - ballspeedratio_x;
-    s_ball_x_coordinate -= 300*dirball_x*ballspeedratio_x*elapsed;
-    s_ball_y_coordinate -= 300*dirball_y*ballspeedratio_y*elapsed;
+    s_ball_x_coordinate -= 400*dirball_x*ballspeedratio_x*elapsed;
+    s_ball_y_coordinate -= 400*dirball_y*ballspeedratio_y*elapsed;
     // std::cout << dirball_x << std::endl;
     // std::cout << dirball_y << std::endl;
     // std::cout << std::endl;
@@ -164,7 +164,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         if (s_ball_y_coordinate > rect_start && s_ball_y_coordinate < rect_end) {
             // dirball_x = DOWN;
             // dirball_y = UP;
-            flip_direction(dirball_x);
+            dirball_x = DOWN;
         }
     }
 
@@ -172,7 +172,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         if (s_ball_y_coordinate > rect2_start && s_ball_y_coordinate < rect2_end) {
             // dirball_x = DOWN;
             // dirball_y = UP;
-            flip_direction(dirball_x);
+            dirball_x = UP;
         }
     }
 
@@ -188,6 +188,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         s_ball_x_coordinate = WINDOW_WIDTH/2;
         s_ball_y_coordinate = WINDOW_HEIGHT/2;
         ballspeedratio_x = SDL_randf();
+        dirball_x = UP;
         score_cpu++;
     }
 
@@ -195,6 +196,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         s_ball_x_coordinate = WINDOW_WIDTH/2;
         s_ball_y_coordinate = WINDOW_HEIGHT/2;
         ballspeedratio_x = SDL_randf();
+        dirball_x = UP;
         score_player++;
     }
 
