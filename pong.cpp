@@ -39,7 +39,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("pong", WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("pong", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -145,8 +145,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect3.w = 10;
     rect3.h = 10;
 
-    s_ball_x_coordinate -= 200*dirball_x*elapsed;
-    s_ball_y_coordinate -= 200*dirball_y*elapsed;
+    s_ball_x_coordinate -= 150*dirball_x*elapsed;
+    s_ball_y_coordinate -= 150*dirball_y*elapsed;
     // std::cout << dirball_x << std::endl;
     // std::cout << dirball_y << std::endl;
     // std::cout << std::endl;
@@ -193,6 +193,15 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // SDL_RenderRect(renderer, &rect);
 
     last_time = now;
+
+    SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+    SDL_RenderDebugText(renderer, WINDOW_WIDTH/4, 100, "00");
+    SDL_RenderDebugText(renderer, 3*WINDOW_WIDTH/4, 100, "00");
+
+    for (int i = 0; i < WINDOW_HEIGHT; i += 10) {
+        SDL_RenderPoint(renderer, WINDOW_WIDTH/2, i);
+    }
+    
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
