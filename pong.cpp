@@ -101,7 +101,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect.w = 10;
     rect.h = 60;
 
-    float rect_start = rect.y + rect.w + 4;
+    float rect_start = rect.y + 4;
     float rect_end = rect_start + rect.h - 4;
     // std::cout << rect.y << std::endl;
 
@@ -116,7 +116,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     } else if (s_player_y_coordinate > WINDOW_HEIGHT-rect.h) {
         s_player_y_coordinate = WINDOW_HEIGHT-rect.h;
     } else {
-        s_player_y_coordinate -= 250*dir*elapsed;
+        s_player_y_coordinate -= 300*dir*elapsed;
     }
     SDL_RenderFillRect(renderer, &rect);
 
@@ -145,20 +145,36 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect3.w = 10;
     rect3.h = 10;
 
-    s_ball_x_coordinate -= 100*dirball_x*elapsed;
-    s_ball_y_coordinate -= 100*dirball_y*elapsed;
-    std::cout << dirball_x << std::endl;
-    std::cout << dirball_y << std::endl;
-    std::cout << std::endl;
+    s_ball_x_coordinate -= 200*dirball_x*elapsed;
+    s_ball_y_coordinate -= 200*dirball_y*elapsed;
+    // std::cout << dirball_x << std::endl;
+    // std::cout << dirball_y << std::endl;
+    // std::cout << std::endl;
 
-    if (s_ball_x_coordinate < rect.x) {
-        if (s_ball_y_coordinate > rect_start and s_ball_y_coordinate < rect_end) {
+    if (s_ball_x_coordinate <= rect.x + rect.w) {
+        if (s_ball_y_coordinate > rect_start && s_ball_y_coordinate < rect_end) {
             // dirball_x = DOWN;
             // dirball_y = UP;
             flip_direction(dirball_x);
-            flip_direction(dirball_y);
         }
     }
+
+    if (s_ball_x_coordinate >= rect2.x - rect2.w) {
+        if (s_ball_y_coordinate > rect2_start && s_ball_y_coordinate < rect2_end) {
+            // dirball_x = DOWN;
+            // dirball_y = UP;
+            flip_direction(dirball_x);
+        }
+    }
+
+    if (s_ball_y_coordinate <= 0) {
+        flip_direction(dirball_y);
+    }
+
+    if (s_ball_y_coordinate >= WINDOW_HEIGHT) {
+        flip_direction(dirball_y);
+    }
+
     // if (s_cpu_y_coordinate < 0) {
     //     dir2 = DOWN;
     // }
