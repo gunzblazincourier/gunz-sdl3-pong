@@ -85,6 +85,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    std::cout << ballspeedratio_x << std::endl;
     const Uint64 now = SDL_GetTicks();
     const float elapsed = ((float) (now - last_time)) / 1000.0f;
 
@@ -149,6 +150,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     rect3.w = 10;
     rect3.h = 10;
 
+    if (ballspeedratio_x < 0.3 or ballspeedratio_x > 0.7) {
+        ballspeedratio_x = SDL_randf();
+    }
     float ballspeedratio_y = 1 - ballspeedratio_x;
     s_ball_x_coordinate -= 300*dirball_x*ballspeedratio_x*elapsed;
     s_ball_y_coordinate -= 300*dirball_y*ballspeedratio_y*elapsed;
