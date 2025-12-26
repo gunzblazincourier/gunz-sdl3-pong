@@ -1,3 +1,11 @@
+/* Components of Pong:
+ * - Player paddle ('Up' key to move up, 'Down' key to move down)
+ * - CPU paddle
+ * - Ball which ping-pongs between paddles and walls
+ * - Middle partition
+ * - Score
+ */
+
 #define SDL_MAIN_USE_CALLBACKS 1    /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -6,38 +14,36 @@
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
-static Uint64 last_time = 0;
+static Uint64 last_time = 0;    // The time deltatime before the current frame
 
 static const int WINDOW_WIDTH = 640;
 static const int WINDOW_HEIGHT = 480;
 
 enum Directions {UP = 1, DOWN = -1, ZERO = 0};
-static Directions dir = ZERO;
-static Directions dir2 = UP;
-static Directions dirball_x = UP;
-static Directions dirball_y = DOWN;
+static Directions s_direction_player = ZERO;
+static Directions s_direction_cpu = UP;
+static Directions s_direction_ball_x = UP;
+static Directions s_direction_ball_y = DOWN;
 
-static float s_player_y_coordinate = 100;
-static float s_cpu_y_coordinate = 100;
-static float s_ball_x_coordinate = WINDOW_WIDTH/2;
-static float s_ball_y_coordinate = WINDOW_HEIGHT/2;
-static float ballspeedratio_x = SDL_randf();
+// Place player and CPU paddles little below upper wall
+static float s_position_player_y = 100;
+static float s_position_cpu_y = 100;
 
-static int score_player = 0;
-static int score_cpu = 0;
+// Place ball in middle of screen
+static float s_position_ball_x = WINDOW_WIDTH/2;
+static float s_position_ball_y = WINDOW_HEIGHT/2;
 
-void flip_direction(Directions& d) {
-    if (d == UP) {
-        d = DOWN;
-    } else if (d == DOWN) {
-        d = UP;
-    }
-}
+// Set a random x (and by extension random y) between 0.0 and 1.0
+static float s_component_ball_x = SDL_randf();
 
-/* We will use this renderer to draw into this window every frame. */
+static int s_score_player = 0;
+static int s_score_cpu = 0;
+
+/* This function runs once at startup */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
     SDL_SetAppMetadata("Pong", "1.0", "gunz-sdl3-pong");
 
+    // We will use this renderer to draw into this window every frame
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -53,28 +59,29 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
     return SDL_APP_CONTINUE;
 }
 
+/* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+    // For when key is pressed
     if (event->type == SDL_EVENT_KEY_DOWN) {
+        // Up key pressed
         if (event->key.scancode == SDL_SCANCODE_UP) {
-            dir = UP;
+            s_direction_player = UP;
+        // Down key pressed
         } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-            dir = DOWN;
+            s_direction_player = DOWN;
         }
-        // else {
-        //     dir = ZERO;
-        // }
     }
 
+    // For when key is released
     if (event->type == SDL_EVENT_KEY_UP) {
+        // Up key released
         if (event->key.scancode == SDL_SCANCODE_UP) {
-            dir = ZERO;
+            s_direction_player = ZERO;
+        // Down key released
         } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-            dir = ZERO;
+            s_direction_player = ZERO;
         }
-        // else {
-        //     dir = ZERO;
-        // }
     }
 
     if (event->type == SDL_EVENT_QUIT) {
@@ -83,166 +90,134 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
+/* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    std::cout << ballspeedratio_x << std::endl;
+    /* Get the number of milliseconds that have elapsed since the SDL library initialization */
     const Uint64 now = SDL_GetTicks();
-    const float elapsed = ((float) (now - last_time)) / 1000.0f;
 
-    SDL_FRect rect;
-    SDL_FRect rect2;
-    SDL_FRect rect3;
-    // std::cout << dir << std::endl;
-    // std::cout << std::endl;
+    const float deltatime = ((float) (now - last_time)) / 1000.0f;
+
+    SDL_FRect paddle_player;
+    SDL_FRect paddle_cpu;
+    SDL_FRect ball;
 
     /* as you can see from this, rendering draws over whatever was drawn before it. */
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
     SDL_RenderClear(renderer);  /* start with a blank canvas. */
 
-    /* draw player 1 rectangle. */
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);  /* white, full alpha */
-    rect.x = 10;
-    rect.y = s_player_y_coordinate;
-    rect.w = 10;
-    rect.h = 60;
 
-    float rect_start = rect.y + 4;
-    float rect_end = rect_start + rect.h - 4;
-    // std::cout << rect.y << std::endl;
+    // Left edge of screen
+    paddle_player.x = 10;
+    paddle_player.y = s_position_player_y;
+    paddle_player.w = 10;
+    paddle_player.h = 60;
 
-    // if (dir == UP) {
-    //     rect.y += 10;
-    // } else if (dir == DOWN) {
-    //     rect.y -= 10;
-    // }
 
-    if (s_player_y_coordinate < 0) {
-        s_player_y_coordinate = 0;
-    } else if (s_player_y_coordinate > WINDOW_HEIGHT-rect.h) {
-        s_player_y_coordinate = WINDOW_HEIGHT-rect.h;
+    // Right edge of screen
+    paddle_cpu.x = WINDOW_WIDTH - 20;
+    paddle_cpu.y = s_position_cpu_y;
+    paddle_cpu.w = 10;
+    paddle_cpu.h = 60;
+
+    // Top and bottom of each paddles to assist in ball collisions
+    float paddle_player_top = paddle_player.y + 4;
+    float paddle_player_bottom = paddle_player_top + paddle_player.h - 4;
+    float paddle_cpu_top = paddle_cpu.y + 4;
+    float paddle_cpu_bottom = paddle_cpu_top + paddle_cpu.h - 4;
+
+    // Bound player to screen if exceeding window limit, else move player paddle
+    if (s_position_player_y < 0) {
+        s_position_player_y = 0;
+    } else if (s_position_player_y > WINDOW_HEIGHT-paddle_player.h) {
+        s_position_player_y = WINDOW_HEIGHT-paddle_player.h;
     } else {
-        s_player_y_coordinate -= 300*dir*elapsed;
+        s_position_player_y -= 300*s_direction_player*deltatime;
     }
-    SDL_RenderFillRect(renderer, &rect);
 
-    /* draw player 2 rectangle. */
-    rect2.x = WINDOW_WIDTH - 20;
-    rect2.y = s_cpu_y_coordinate;
-    rect2.w = 10;
-    rect2.h = 60;
-
-    float rect2_start = rect2.y + 4;
-    float rect2_end = rect2_start + rect2.h - 4;
-
-    s_cpu_y_coordinate -= 250*dir2*elapsed;
-    if (s_cpu_y_coordinate < 0) {
-        dir2 = DOWN;
+    // Move CPU vertically in ping-pong motion
+    s_position_cpu_y -= 250*s_direction_cpu*deltatime;
+    if (s_position_cpu_y < 0) {
+        s_direction_cpu = DOWN;
     }
     
-    if (s_cpu_y_coordinate > WINDOW_HEIGHT-rect2.h) {
-        dir2 = UP;
+    if (s_position_cpu_y > WINDOW_HEIGHT-paddle_cpu.h) {
+        s_direction_cpu = UP;
     }
-    SDL_RenderFillRect(renderer, &rect2);
 
-    /* Draw ball */
-    rect3.x = s_ball_x_coordinate;
-    rect3.y = s_ball_y_coordinate;
-    rect3.w = 10;
-    rect3.h = 10;
+    ball.x = s_position_ball_x;
+    ball.y = s_position_ball_y;
+    ball.w = 10;
+    ball.h = 10;
 
-    if (ballspeedratio_x < 0.3 or ballspeedratio_x > 0.7) {
-        ballspeedratio_x = SDL_randf();
+    // Reset x component to prevent ball getting stuck in one dimension
+    if (s_component_ball_x < 0.3 or s_component_ball_x > 0.7) {
+        s_component_ball_x = SDL_randf();
     }
-    float ballspeedratio_y = 1 - ballspeedratio_x;
-    s_ball_x_coordinate -= 400*dirball_x*ballspeedratio_x*elapsed;
-    s_ball_y_coordinate -= 400*dirball_y*ballspeedratio_y*elapsed;
-    // std::cout << dirball_x << std::endl;
-    // std::cout << dirball_y << std::endl;
-    // std::cout << std::endl;
+    float s_component_ball_y = 1 - s_component_ball_x;
 
-    if (s_ball_x_coordinate <= rect.x + rect.w) {
-        if (s_ball_y_coordinate > rect_start && s_ball_y_coordinate < rect_end) {
-            // dirball_x = DOWN;
-            // dirball_y = UP;
-            dirball_x = DOWN;
-            if (dir == UP) {
-                dirball_y = UP;
-            } else if (dir == DOWN) {
-                dirball_y = DOWN;
+    s_position_ball_x -= 400*s_direction_ball_x*s_component_ball_x*deltatime;
+    s_position_ball_y -= 400*s_direction_ball_y*s_component_ball_y*deltatime;
+
+    // Handling ball collision with player
+    if (s_position_ball_x <= paddle_player.x + paddle_player.w) {
+        if (s_position_ball_y > paddle_player_top && s_position_ball_y < paddle_player_bottom) {
+            s_direction_ball_x = DOWN;
+            // Change direction of ball to direction of paddle
+            if (s_direction_player == UP) {
+                s_direction_ball_y = UP;
+            } else if (s_direction_player == DOWN) {
+                s_direction_ball_y = DOWN;
             }
         }
     }
 
-    if (s_ball_x_coordinate >= rect2.x - rect2.w) {
-        if (s_ball_y_coordinate > rect2_start && s_ball_y_coordinate < rect2_end) {
-            // dirball_x = DOWN;
-            // dirball_y = UP;
-            dirball_x = UP;
-            if (dir2 == UP) {
-                dirball_y = UP;
-            } else if (dir2 == DOWN) {
-                dirball_y = DOWN;
+    // Handling ball collision with CPU
+    if (s_position_ball_x >= paddle_cpu.x - paddle_cpu.w) {
+        if (s_position_ball_y > paddle_cpu_top && s_position_ball_y < paddle_cpu_bottom) {
+            s_direction_ball_x = UP;
+            // Change direction of ball to direction of paddle
+            if (s_direction_cpu == UP) {
+                s_direction_ball_y = UP;
+            } else if (s_direction_cpu == DOWN) {
+                s_direction_ball_y = DOWN;
             }
         }
     }
 
-    if (s_ball_y_coordinate <= 0) {
-        // flip_direction(dirball_y);
-        dirball_y = DOWN;
+    // Handling collision with top and bottom wall respectively
+    if (s_position_ball_y <= 0) {
+        s_direction_ball_y = DOWN;
+    }
+    if (s_position_ball_y >= WINDOW_HEIGHT) {
+        s_direction_ball_y = UP;
     }
 
-    if (s_ball_y_coordinate >= WINDOW_HEIGHT) {
-        // flip_direction(dirball_y);
-        dirball_y = UP;
+    // When ball crosses left or right side of screen and someone scores
+    if (s_position_ball_x < -20 or s_position_ball_x > WINDOW_WIDTH + 20) {
+        s_position_ball_x = WINDOW_WIDTH/2;
+        s_position_ball_y = WINDOW_HEIGHT/2;
+        s_component_ball_x = SDL_randf();
+        s_direction_ball_x = UP;
+        if (s_position_ball_x < -20) {
+            s_score_cpu++;
+        } else if (s_position_ball_x > WINDOW_WIDTH + 20) {
+            s_score_player++;
+        }
     }
 
-    if (s_ball_x_coordinate < -20) {
-        s_ball_x_coordinate = WINDOW_WIDTH/2;
-        s_ball_y_coordinate = WINDOW_HEIGHT/2;
-        ballspeedratio_x = SDL_randf();
-        dirball_x = UP;
-        score_cpu++;
-    }
+    // Rendering paddles and ball
+    SDL_RenderFillRect(renderer, &paddle_player);
+    SDL_RenderFillRect(renderer, &paddle_cpu);
+    SDL_RenderFillRect(renderer, &ball);
 
-    if (s_ball_x_coordinate > WINDOW_WIDTH + 20) {
-        s_ball_x_coordinate = WINDOW_WIDTH/2;
-        s_ball_y_coordinate = WINDOW_HEIGHT/2;
-        ballspeedratio_x = SDL_randf();
-        dirball_x = UP;
-        score_player++;
-    }
-
-    // if (s_cpu_y_coordinate < 0) {
-    //     dir2 = DOWN;
-    // }
-    
-    // if (s_cpu_y_coordinate > WINDOW_HEIGHT-rect2.h) {
-    //     dir2 = UP;
-    // }
-    SDL_RenderFillRect(renderer, &rect3);
-
-    // /* draw a unfilled rectangle in-set a little bit. */
-    // SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);  /* green, full alpha */
-    // rect.x += 30;
-    // rect.y += 30;
-    // rect.w -= 60;
-    // rect.h -= 60;
-    // SDL_RenderRect(renderer, &rect);
-
-
-
-    // if (s_ball_x_coordinate < 0) {
-    //     score_player++;
-    // }
-
-    // if (s_ball_x_coordinate > WINDOW_WIDTH) {
-    //     score_cpu++;
-    // }
-
+    // Display scores
     SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-    SDL_RenderDebugTextFormat(renderer, WINDOW_WIDTH/4, 100, "%d", score_player);
-    SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", score_cpu);
+    SDL_RenderDebugTextFormat(renderer, WINDOW_WIDTH/4, 100, "%d", s_score_player);
+    SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
 
+    // Middle partition
     for (int i = 0; i < WINDOW_HEIGHT; i += 10) {
         SDL_RenderPoint(renderer, WINDOW_WIDTH/2, i);
     }
