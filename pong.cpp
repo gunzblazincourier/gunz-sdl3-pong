@@ -101,9 +101,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!init_sound("sample.wav", &sounds[0])) {
+    if (!init_sound("bgm.wav", &sounds[0])) {
         return SDL_APP_FAILURE;
-    } else if (!init_sound("sample1.wav", &sounds[1])) {
+    } else if (!init_sound("score.wav", &sounds[1])) {
         return SDL_APP_FAILURE;
     }
 
@@ -144,15 +144,19 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    int i;
+    // int i;
 
-    for (i = 0; i < SDL_arraysize(sounds); i++) {
-        /* If less than a full copy of the audio is queued for playback, put another copy in there.
-           This is overkill, but easy when lots of RAM is cheap. One could be more careful and
-           queue less at a time, as long as the stream doesn't run dry.  */
-        if (SDL_GetAudioStreamQueued(sounds[i].stream) < ((int) sounds[i].wav_data_len)) {
-            SDL_PutAudioStreamData(sounds[i].stream, sounds[i].wav_data, (int) sounds[i].wav_data_len);
-        }
+    // for (i = 0; i < SDL_arraysize(sounds); i++) {
+    //     /* If less than a full copy of the audio is queued for playback, put another copy in there.
+    //        This is overkill, but easy when lots of RAM is cheap. One could be more careful and
+    //        queue less at a time, as long as the stream doesn't run dry.  */
+    //     if (SDL_GetAudioStreamQueued(sounds[i].stream) < ((int) sounds[i].wav_data_len)) {
+    //         SDL_PutAudioStreamData(sounds[i].stream, sounds[i].wav_data, (int) sounds[i].wav_data_len);
+    //     }
+    // }
+
+    if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
+        SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
     }
     /* Get the number of milliseconds that have elapsed since the SDL library initialization */
     const Uint64 now = SDL_GetTicks();
@@ -256,16 +260,22 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     }
 
     // When ball crosses left or right side of screen and someone scores
-    if (s_position_ball_x < -20 or s_position_ball_x > WINDOW_WIDTH + 20) {
+    if (s_position_ball_x < -20) {
         s_position_ball_x = WINDOW_WIDTH/2;
         s_position_ball_y = WINDOW_HEIGHT/2;
         s_component_ball_x = SDL_randf();
         s_direction_ball_x = UP;
-        if (s_position_ball_x < -20) {
-            s_score_cpu++;
-        } else if (s_position_ball_x > WINDOW_WIDTH + 20) {
-            s_score_player++;
-        }
+        SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+        s_score_cpu++;
+    }
+
+    if (s_position_ball_x > WINDOW_WIDTH + 20) {
+        s_position_ball_x = WINDOW_WIDTH/2;
+        s_position_ball_y = WINDOW_HEIGHT/2;
+        s_component_ball_x = SDL_randf();
+        s_direction_ball_x = UP;
+        SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+        s_score_player++;
     }
 
     // Rendering paddles and ball
