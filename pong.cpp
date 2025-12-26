@@ -101,7 +101,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     /* draw player 1 rectangle. */
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);  /* white, full alpha */
-    rect.x = 20;
+    rect.x = 10;
     rect.y = s_player_y_coordinate;
     rect.w = 10;
     rect.h = 60;
@@ -165,6 +165,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             // dirball_x = DOWN;
             // dirball_y = UP;
             dirball_x = DOWN;
+            if (dir == UP) {
+                dirball_y = UP;
+            } else if (dir == DOWN) {
+                dirball_y = DOWN;
+            }
         }
     }
 
@@ -173,15 +178,22 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             // dirball_x = DOWN;
             // dirball_y = UP;
             dirball_x = UP;
+            if (dir2 == UP) {
+                dirball_y = UP;
+            } else if (dir2 == DOWN) {
+                dirball_y = DOWN;
+            }
         }
     }
 
     if (s_ball_y_coordinate <= 0) {
-        flip_direction(dirball_y);
+        // flip_direction(dirball_y);
+        dirball_y = DOWN;
     }
 
     if (s_ball_y_coordinate >= WINDOW_HEIGHT) {
-        flip_direction(dirball_y);
+        // flip_direction(dirball_y);
+        dirball_y = UP;
     }
 
     if (s_ball_x_coordinate < -20) {
