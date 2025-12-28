@@ -275,7 +275,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // When ball crosses left or right side of screen and someone scores
     if (s_position_ball_x < -20) {
         s_position_ball_x = WINDOW_WIDTH/2;
-        s_position_ball_y = WINDOW_HEIGHT/2;
+        s_position_ball_y = SDL_rand(WINDOW_HEIGHT);
         s_component_ball_x = SDL_randf();
         s_direction_ball_x = UP;
         SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
