@@ -9,6 +9,7 @@
 #define SDL_MAIN_USE_CALLBACKS 1    /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <iostream>
 
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
@@ -101,10 +102,30 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!init_sound("bgm.wav", &sounds[0])) {
-        return SDL_APP_FAILURE;
-    } else if (!init_sound("score.wav", &sounds[1])) {
-        return SDL_APP_FAILURE;
+    if (SDL_rand(100) < 25) {
+        if (!init_sound("bgm.wav", &sounds[0])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        }
+    } else if (SDL_rand(100) < 50) {
+        if (!init_sound("bgm2.wav", &sounds[0])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        }
+    } else if (SDL_rand(100) < 75) {
+        if (!init_sound("bgm3.wav", &sounds[0])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        }
+    } else {
+            if (!init_sound("bgm4.wav", &sounds[0])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        }
     }
 
     return SDL_APP_CONTINUE;
@@ -144,17 +165,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    // int i;
-
-    // for (i = 0; i < SDL_arraysize(sounds); i++) {
-    //     /* If less than a full copy of the audio is queued for playback, put another copy in there.
-    //        This is overkill, but easy when lots of RAM is cheap. One could be more careful and
-    //        queue less at a time, as long as the stream doesn't run dry.  */
-    //     if (SDL_GetAudioStreamQueued(sounds[i].stream) < ((int) sounds[i].wav_data_len)) {
-    //         SDL_PutAudioStreamData(sounds[i].stream, sounds[i].wav_data, (int) sounds[i].wav_data_len);
-    //     }
-    // }
-
+    /* If less than a full copy of the audio is queued for playback, put another copy in there.
+        This is overkill, but easy when lots of RAM is cheap. One could be more careful and
+        queue less at a time, as long as the stream doesn't run dry.  */
     if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
         SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
     }
