@@ -12,6 +12,7 @@
 #include <iostream>
 
 static bool display_menu = true;
+static bool is_start_selected = true;
 
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
@@ -49,7 +50,7 @@ typedef struct Sound {
     SDL_AudioStream *stream;
 } Sound;
 
-static Sound sounds[2];
+static Sound sounds[3];
 
 static bool init_sound(const char *fname, Sound *sound)
 {
@@ -109,11 +110,15 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
             return SDL_APP_FAILURE;
+        } else if (!init_sound("menu_select.wav", &sounds[2])) {
+            return SDL_APP_FAILURE;
         }
     } else if (SDL_rand(100) < 50) {
         if (!init_sound("bgm2.wav", &sounds[0])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
         }
     } else if (SDL_rand(100) < 75) {
@@ -121,11 +126,15 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
             return SDL_APP_FAILURE;
+        } else if (!init_sound("menu_select.wav", &sounds[2])) {
+            return SDL_APP_FAILURE;
         }
     } else {
             if (!init_sound("bgm4.wav", &sounds[0])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
         }
     }
@@ -158,6 +167,21 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 s_direction_player = ZERO;
             }
         }
+    } else {
+        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
+            // Up key pressed
+            if (event->key.scancode == SDL_SCANCODE_UP || event->key.scancode == SDL_SCANCODE_DOWN) {
+                if (is_start_selected == false) {
+                    is_start_selected = true;
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                } else {
+                    is_start_selected = false;
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                }
+            }
+        }
     }
 
     if (event->type == SDL_EVENT_QUIT) {
@@ -180,6 +204,19 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     if (display_menu == true) {
         SDL_SetRenderScale(renderer, 4.0f, 4.0f);
         SDL_RenderDebugText(renderer, WINDOW_WIDTH/12, WINDOW_HEIGHT/15, "PONG");
+
+        SDL_SetRenderScale(renderer, 2.0f, 2.0f);
+        if (is_start_selected == true) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-start");
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-end");
+        } else {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-start");
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-end");
+        }
         // SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
     } else {
         /* If less than a full copy of the audio is queued for playback, put another copy in there.
