@@ -11,6 +11,8 @@
 #include <SDL3/SDL_main.h>
 #include <iostream>
 
+static bool display_menu = true;
+
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -134,25 +136,27 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-    // For when key is pressed
-    if (event->type == SDL_EVENT_KEY_DOWN) {
-        // Up key pressed
-        if (event->key.scancode == SDL_SCANCODE_UP) {
-            s_direction_player = UP;
-        // Down key pressed
-        } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-            s_direction_player = DOWN;
+    if (display_menu == false) {
+        // For when key is pressed
+        if (event->type == SDL_EVENT_KEY_DOWN) {
+            // Up key pressed
+            if (event->key.scancode == SDL_SCANCODE_UP) {
+                s_direction_player = UP;
+            // Down key pressed
+            } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                s_direction_player = DOWN;
+            }
         }
-    }
 
-    // For when key is released
-    if (event->type == SDL_EVENT_KEY_UP) {
-        // Up key released
-        if (event->key.scancode == SDL_SCANCODE_UP) {
-            s_direction_player = ZERO;
-        // Down key released
-        } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-            s_direction_player = ZERO;
+        // For when key is released
+        if (event->type == SDL_EVENT_KEY_UP) {
+            // Up key released
+            if (event->key.scancode == SDL_SCANCODE_UP) {
+                s_direction_player = ZERO;
+            // Down key released
+            } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                s_direction_player = ZERO;
+            }
         }
     }
 
@@ -165,145 +169,149 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    /* If less than a full copy of the audio is queued for playback, put another copy in there.
-        This is overkill, but easy when lots of RAM is cheap. One could be more careful and
-        queue less at a time, as long as the stream doesn't run dry.  */
-    if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
-        SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
-    }
-    /* Get the number of milliseconds that have elapsed since the SDL library initialization */
-    const Uint64 now = SDL_GetTicks();
-
-    const float deltatime = ((float) (now - last_time)) / 1000.0f;
-
-    SDL_FRect paddle_player;
-    SDL_FRect paddle_cpu;
-    SDL_FRect ball;
-
     /* as you can see from this, rendering draws over whatever was drawn before it. */
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
     SDL_RenderClear(renderer);  /* start with a blank canvas. */
-
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);  /* white, full alpha */
 
-    // Left edge of screen
-    paddle_player.x = 10;
-    paddle_player.y = s_position_player_y;
-    paddle_player.w = 10;
-    paddle_player.h = 60;
-
-
-    // Right edge of screen
-    paddle_cpu.x = WINDOW_WIDTH - 20;
-    paddle_cpu.y = s_position_cpu_y;
-    paddle_cpu.w = 10;
-    paddle_cpu.h = 60;
-
-    // Top and bottom of each paddles to assist in ball collisions
-    float paddle_player_top = paddle_player.y + 4;
-    float paddle_player_bottom = paddle_player_top + paddle_player.h - 4;
-    float paddle_cpu_top = paddle_cpu.y + 4;
-    float paddle_cpu_bottom = paddle_cpu_top + paddle_cpu.h - 4;
-
-    // Bound player to screen if exceeding window limit, else move player paddle
-    if (s_position_player_y < 0) {
-        s_position_player_y = 0;
-    } else if (s_position_player_y > WINDOW_HEIGHT-paddle_player.h) {
-        s_position_player_y = WINDOW_HEIGHT-paddle_player.h;
+    /* Get the number of milliseconds that have elapsed since the SDL library initialization */
+    const Uint64 now = SDL_GetTicks();
+    const float deltatime = ((float) (now - last_time)) / 1000.0f;
+    if (display_menu == true) {
+        SDL_SetRenderScale(renderer, 4.0f, 4.0f);
+        SDL_RenderDebugText(renderer, WINDOW_WIDTH/12, WINDOW_HEIGHT/15, "PONG");
+        // SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
     } else {
-        s_position_player_y -= 300*s_direction_player*deltatime;
-    }
+        /* If less than a full copy of the audio is queued for playback, put another copy in there.
+            This is overkill, but easy when lots of RAM is cheap. One could be more careful and
+            queue less at a time, as long as the stream doesn't run dry.  */
+        if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
+            SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
+        }
 
-    // Move CPU vertically in ping-pong motion
-    s_position_cpu_y -= 250*s_direction_cpu*deltatime;
-    if (s_position_cpu_y < 0) {
-        s_direction_cpu = DOWN;
-    }
-    
-    if (s_position_cpu_y > WINDOW_HEIGHT-paddle_cpu.h) {
-        s_direction_cpu = UP;
-    }
+        SDL_FRect paddle_player;
+        SDL_FRect paddle_cpu;
+        SDL_FRect ball;
 
-    ball.x = s_position_ball_x;
-    ball.y = s_position_ball_y;
-    ball.w = 10;
-    ball.h = 10;
+        // Left edge of screen
+        paddle_player.x = 10;
+        paddle_player.y = s_position_player_y;
+        paddle_player.w = 10;
+        paddle_player.h = 60;
 
-    // Reset x component to prevent ball getting stuck in one dimension
-    if (s_component_ball_x < 0.3 or s_component_ball_x > 0.7) {
-        s_component_ball_x = SDL_randf();
-    }
-    float s_component_ball_y = 1 - s_component_ball_x;
 
-    s_position_ball_x -= 400*s_direction_ball_x*s_component_ball_x*deltatime;
-    s_position_ball_y -= 400*s_direction_ball_y*s_component_ball_y*deltatime;
+        // Right edge of screen
+        paddle_cpu.x = WINDOW_WIDTH - 20;
+        paddle_cpu.y = s_position_cpu_y;
+        paddle_cpu.w = 10;
+        paddle_cpu.h = 60;
 
-    // Handling ball collision with player
-    if (s_position_ball_x <= paddle_player.x + paddle_player.w) {
-        if (s_position_ball_y > paddle_player_top && s_position_ball_y < paddle_player_bottom) {
-            s_direction_ball_x = DOWN;
-            // Change direction of ball to direction of paddle
-            if (s_direction_player == UP) {
-                s_direction_ball_y = UP;
-            } else if (s_direction_player == DOWN) {
-                s_direction_ball_y = DOWN;
+        // Top and bottom of each paddles to assist in ball collisions
+        float paddle_player_top = paddle_player.y + 4;
+        float paddle_player_bottom = paddle_player_top + paddle_player.h - 4;
+        float paddle_cpu_top = paddle_cpu.y + 4;
+        float paddle_cpu_bottom = paddle_cpu_top + paddle_cpu.h - 4;
+
+        // Bound player to screen if exceeding window limit, else move player paddle
+        if (s_position_player_y < 0) {
+            s_position_player_y = 0;
+        } else if (s_position_player_y > WINDOW_HEIGHT-paddle_player.h) {
+            s_position_player_y = WINDOW_HEIGHT-paddle_player.h;
+        } else {
+            s_position_player_y -= 300*s_direction_player*deltatime;
+        }
+
+        // Move CPU vertically in ping-pong motion
+        s_position_cpu_y -= 250*s_direction_cpu*deltatime;
+        if (s_position_cpu_y < 0) {
+            s_direction_cpu = DOWN;
+        }
+        
+        if (s_position_cpu_y > WINDOW_HEIGHT-paddle_cpu.h) {
+            s_direction_cpu = UP;
+        }
+
+        ball.x = s_position_ball_x;
+        ball.y = s_position_ball_y;
+        ball.w = 10;
+        ball.h = 10;
+
+        // Reset x component to prevent ball getting stuck in one dimension
+        if (s_component_ball_x < 0.3 or s_component_ball_x > 0.7) {
+            s_component_ball_x = SDL_randf();
+        }
+        float s_component_ball_y = 1 - s_component_ball_x;
+
+        s_position_ball_x -= 400*s_direction_ball_x*s_component_ball_x*deltatime;
+        s_position_ball_y -= 400*s_direction_ball_y*s_component_ball_y*deltatime;
+
+        // Handling ball collision with player
+        if (s_position_ball_x <= paddle_player.x + paddle_player.w) {
+            if (s_position_ball_y > paddle_player_top && s_position_ball_y < paddle_player_bottom) {
+                s_direction_ball_x = DOWN;
+                // Change direction of ball to direction of paddle
+                if (s_direction_player == UP) {
+                    s_direction_ball_y = UP;
+                } else if (s_direction_player == DOWN) {
+                    s_direction_ball_y = DOWN;
+                }
             }
         }
-    }
 
-    // Handling ball collision with CPU
-    if (s_position_ball_x >= paddle_cpu.x - paddle_cpu.w) {
-        if (s_position_ball_y > paddle_cpu_top && s_position_ball_y < paddle_cpu_bottom) {
+        // Handling ball collision with CPU
+        if (s_position_ball_x >= paddle_cpu.x - paddle_cpu.w) {
+            if (s_position_ball_y > paddle_cpu_top && s_position_ball_y < paddle_cpu_bottom) {
+                s_direction_ball_x = UP;
+                // Change direction of ball to direction of paddle
+                if (s_direction_cpu == UP) {
+                    s_direction_ball_y = UP;
+                } else if (s_direction_cpu == DOWN) {
+                    s_direction_ball_y = DOWN;
+                }
+            }
+        }
+
+        // Handling collision with top and bottom wall respectively
+        if (s_position_ball_y <= 0) {
+            s_direction_ball_y = DOWN;
+        }
+        if (s_position_ball_y >= WINDOW_HEIGHT) {
+            s_direction_ball_y = UP;
+        }
+
+        // When ball crosses left or right side of screen and someone scores
+        if (s_position_ball_x < -20) {
+            s_position_ball_x = WINDOW_WIDTH/2;
+            s_position_ball_y = SDL_rand(WINDOW_HEIGHT);
+            s_component_ball_x = SDL_randf();
             s_direction_ball_x = UP;
-            // Change direction of ball to direction of paddle
-            if (s_direction_cpu == UP) {
-                s_direction_ball_y = UP;
-            } else if (s_direction_cpu == DOWN) {
-                s_direction_ball_y = DOWN;
-            }
+            SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+            s_score_cpu++;
         }
-    }
 
-    // Handling collision with top and bottom wall respectively
-    if (s_position_ball_y <= 0) {
-        s_direction_ball_y = DOWN;
-    }
-    if (s_position_ball_y >= WINDOW_HEIGHT) {
-        s_direction_ball_y = UP;
-    }
+        if (s_position_ball_x > WINDOW_WIDTH + 20) {
+            s_position_ball_x = WINDOW_WIDTH/2;
+            s_position_ball_y = WINDOW_HEIGHT/2;
+            s_component_ball_x = SDL_randf();
+            s_direction_ball_x = UP;
+            SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+            s_score_player++;
+        }
 
-    // When ball crosses left or right side of screen and someone scores
-    if (s_position_ball_x < -20) {
-        s_position_ball_x = WINDOW_WIDTH/2;
-        s_position_ball_y = SDL_rand(WINDOW_HEIGHT);
-        s_component_ball_x = SDL_randf();
-        s_direction_ball_x = UP;
-        SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
-        s_score_cpu++;
-    }
+        // Rendering paddles and ball
+        SDL_RenderFillRect(renderer, &paddle_player);
+        SDL_RenderFillRect(renderer, &paddle_cpu);
+        SDL_RenderFillRect(renderer, &ball);
 
-    if (s_position_ball_x > WINDOW_WIDTH + 20) {
-        s_position_ball_x = WINDOW_WIDTH/2;
-        s_position_ball_y = WINDOW_HEIGHT/2;
-        s_component_ball_x = SDL_randf();
-        s_direction_ball_x = UP;
-        SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
-        s_score_player++;
-    }
+        // Display scores
+        SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+        SDL_RenderDebugTextFormat(renderer, WINDOW_WIDTH/4, 100, "%d", s_score_player);
+        SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
 
-    // Rendering paddles and ball
-    SDL_RenderFillRect(renderer, &paddle_player);
-    SDL_RenderFillRect(renderer, &paddle_cpu);
-    SDL_RenderFillRect(renderer, &ball);
-
-    // Display scores
-    SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-    SDL_RenderDebugTextFormat(renderer, WINDOW_WIDTH/4, 100, "%d", s_score_player);
-    SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
-
-    // Middle partition
-    for (int i = 0; i < WINDOW_HEIGHT; i += 10) {
-        SDL_RenderPoint(renderer, WINDOW_WIDTH/2, i);
+        // Middle partition
+        for (int i = 0; i < WINDOW_HEIGHT; i += 10) {
+            SDL_RenderPoint(renderer, WINDOW_WIDTH/2, i);
+        }
     }
 
     last_time = now;
