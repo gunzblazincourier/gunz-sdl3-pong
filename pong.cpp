@@ -105,7 +105,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (SDL_rand(100) < 25) {
+    int random_music_number = SDL_rand(100);
+    if (random_music_number < 25) {
         if (!init_sound("bgm.wav", &sounds[0])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
@@ -113,7 +114,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
         }
-    } else if (SDL_rand(100) < 50) {
+    } else if (random_music_number < 50) {
         if (!init_sound("bgm2.wav", &sounds[0])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
@@ -121,7 +122,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
         }
-    } else if (SDL_rand(100) < 75) {
+    } else if (random_music_number < 75) {
         if (!init_sound("bgm3.wav", &sounds[0])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("score.wav", &sounds[1])) {
@@ -214,14 +215,14 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_SetRenderScale(renderer, 2.0f, 2.0f);
         if (is_start_selected == true) {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-start");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-play");
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-end");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-quit");
         } else {
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-start");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-play");
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-end");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-quit");
         }
         // SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
     } else {
