@@ -180,6 +180,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                     SDL_ClearAudioStream(sounds[2].stream);
                     SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
                 }
+            } if (event->key.scancode == SDL_SCANCODE_RETURN) {
+                if (is_start_selected == true) {
+                    display_menu = false;
+                } else {
+                    event->type = SDL_EVENT_QUIT;
+                }
             }
         }
     }
