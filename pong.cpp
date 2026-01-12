@@ -367,7 +367,6 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     int i;
-
     for (i = 0; i < SDL_arraysize(sounds); i++) {
         /* If less than a full copy of the audio is queued for playback, put another copy in there.
            This is overkill, but easy when lots of RAM is cheap. One could be more careful and
@@ -376,5 +375,11 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
             SDL_PutAudioStreamData(sounds[i].stream, sounds[i].wav_data, (int) sounds[i].wav_data_len);
         }
     }
-    /* SDL will clean up the window/renderer for us. */
+    
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    SDL_Quit();
 }
