@@ -12,7 +12,9 @@
 #include <iostream>
 
 static bool display_menu = true;
-static bool is_start_selected = true;
+enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
+static Menu menu_choice = PLAY;
+
 
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
@@ -171,20 +173,26 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     } else {
         if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
             // Up key pressed
-            if (event->key.scancode == SDL_SCANCODE_UP || event->key.scancode == SDL_SCANCODE_DOWN) {
-                if (is_start_selected == false) {
-                    is_start_selected = true;
-                    SDL_ClearAudioStream(sounds[2].stream);
-                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+            if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                SDL_ClearAudioStream(sounds[2].stream);
+                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                menu_choice = static_cast<Menu>((menu_choice + 1) % (QUIT+1));
+            }
+
+            if (event->key.scancode == SDL_SCANCODE_UP) {
+                SDL_ClearAudioStream(sounds[2].stream);
+                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                if (menu_choice == 0) {
+                    menu_choice = QUIT;
                 } else {
-                    is_start_selected = false;
-                    SDL_ClearAudioStream(sounds[2].stream);
-                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                    menu_choice = static_cast<Menu>((menu_choice - 1) % (QUIT+1));
                 }
-            } if (event->key.scancode == SDL_SCANCODE_RETURN) {
-                if (is_start_selected == true) {
+            }
+            
+            if (event->key.scancode == SDL_SCANCODE_RETURN) {
+                if (menu_choice == PLAY) {
                     display_menu = false;
-                } else {
+                } else if (menu_choice == QUIT) {
                     event->type = SDL_EVENT_QUIT;
                 }
             }
@@ -200,6 +208,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    std::cout << menu_choice << std::endl;
     /* as you can see from this, rendering draws over whatever was drawn before it. */
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);  /* black, full alpha */
     SDL_RenderClear(renderer);  /* start with a blank canvas. */
@@ -213,16 +222,27 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_RenderDebugText(renderer, WINDOW_WIDTH/12, WINDOW_HEIGHT/15, "PONG");
 
         SDL_SetRenderScale(renderer, 2.0f, 2.0f);
-        if (is_start_selected == true) {
+        if (menu_choice == PLAY) {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-play");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "PLAY");
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-quit");
-        } else {
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "OPTIONS");
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "-play");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+30, "QUIT");
+        } else if (menu_choice == OPTIONS) {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "PLAY");
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "-quit");
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "OPTIONS");
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+30, "QUIT");
+        } else if (menu_choice == QUIT) {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15, "PLAY");
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+15, "OPTIONS");
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 2*WINDOW_WIDTH/10, 3*WINDOW_HEIGHT/15+30, "QUIT");
         }
         // SDL_RenderDebugTextFormat(renderer, 3*WINDOW_WIDTH/4, 100, "%d", s_score_cpu);
     } else {
