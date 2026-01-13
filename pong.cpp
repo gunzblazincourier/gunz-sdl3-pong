@@ -182,7 +182,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             }
         }
     } else if (display_menu == true && display_options == false){
-        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
+        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && SDL_GetAudioStreamQueued(sounds[3].stream) == 0) {
             // Up key pressed
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
                 SDL_ClearAudioStream(sounds[2].stream);
