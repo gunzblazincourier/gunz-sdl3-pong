@@ -23,8 +23,8 @@ static SDL_Renderer *renderer = NULL;
 static SDL_AudioDeviceID audio_device = 0;
 static Uint64 last_time = 0;    // The time deltatime before the current frame
 
-static int WINDOW_WIDTH = 1920;
-static int WINDOW_HEIGHT = 1080;
+static int WINDOW_WIDTH = 1024;
+static int WINDOW_HEIGHT = 768;
 static const int GAME_WIDTH = 640;
 static const int GAME_HEIGHT = 480;
 
@@ -55,7 +55,7 @@ typedef struct Sound {
     SDL_AudioStream *stream;
 } Sound;
 
-static Sound sounds[3];
+static Sound sounds[4];
 
 static bool init_sound(const char *fname, Sound *sound)
 {
@@ -96,7 +96,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("pong", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_FULLSCREEN, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("pong", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -118,6 +118,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
+        } else if (!init_sound("start.wav", &sounds[3])) {
+            return SDL_APP_FAILURE;
         }
     } else if (random_music_number < 50) {
         if (!init_sound("bgm2.wav", &sounds[0])) {
@@ -125,6 +127,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         } else if (!init_sound("score.wav", &sounds[1])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("start.wav", &sounds[3])) {
             return SDL_APP_FAILURE;
         }
     } else if (random_music_number < 75) {
@@ -134,6 +138,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
             return SDL_APP_FAILURE;
+        } else if (!init_sound("start.wav", &sounds[3])) {
+            return SDL_APP_FAILURE;
         }
     } else {
             if (!init_sound("bgm4.wav", &sounds[0])) {
@@ -141,6 +147,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         } else if (!init_sound("score.wav", &sounds[1])) {
             return SDL_APP_FAILURE;
         } else if (!init_sound("menu_select.wav", &sounds[2])) {
+            return SDL_APP_FAILURE;
+        } else if (!init_sound("start.wav", &sounds[3])) {
             return SDL_APP_FAILURE;
         }
     }
@@ -194,7 +202,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             
             if (event->key.scancode == SDL_SCANCODE_RETURN) {
                 if (menu_choice == PLAY) {
-                    display_menu = false;
+                    SDL_ClearAudioStream(sounds[3].stream);
+                    SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                    // display_menu = false;
                 } else if (menu_choice == QUIT) {
                     event->type = SDL_EVENT_QUIT;
                 }
@@ -211,6 +221,10 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    if (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && SDL_GetAudioStreamQueued(sounds[3].stream) < 1000) {
+        // std::cout << (int)(SDL_GetAudioStreamQueued(sounds[3].stream)) << std::endl;
+        display_menu = false;
+    }
     /* Get the number of milliseconds that have elapsed since the SDL library initialization */
     const Uint64 now = SDL_GetTicks();
     const float deltatime = ((float) (now - last_time)) / 1000.0f;
