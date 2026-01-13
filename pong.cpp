@@ -229,6 +229,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const Uint64 now = SDL_GetTicks();
     const float deltatime = ((float) (now - last_time)) / 1000.0f;
 
+    // std::cout << now << std::endl;
+
     if (display_menu == true && display_options == false) {
         SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
@@ -239,8 +241,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         SDL_SetRenderScale(renderer, 2.0f, 2.0f);
         if (menu_choice == PLAY) {
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
+            if (SDL_GetAudioStreamQueued(sounds[3].stream) == 0 ||
+                    (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && (now / 250) % 2 == 0)) {
+                SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+                SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
+            }
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "OPTIONS");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
