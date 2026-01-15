@@ -407,7 +407,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         // Display scores
         SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-        SDL_SetRenderDrawColor(renderer, 255, 214, 98, SDL_ALPHA_OPAQUE);
+        SDL_SetRenderDrawColor(renderer, 151, 188, 98, SDL_ALPHA_OPAQUE);
         SDL_RenderDebugTextFormat(renderer, GAME_WIDTH/4, 100, "%d", s_score_player);
         SDL_RenderDebugTextFormat(renderer, 3*GAME_WIDTH/4, 100, "%d", s_score_cpu);
 
