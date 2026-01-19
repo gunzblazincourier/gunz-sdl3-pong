@@ -14,7 +14,9 @@
 static bool display_menu = true;
 static bool display_options = false;
 enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
+enum Options {RESOLUTION = 0, BALL_SPEED = 1, PADDLE_SPEED = 2};
 static Menu menu_choice = PLAY;
+static Options options_choice = RESOLUTION;
 
 
 /* We will use this renderer to draw into this window every frame. */
@@ -181,7 +183,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 s_direction_player = ZERO;
             }
         }
-    } else if (display_menu == true && display_options == false){
+    } else if (display_menu == true && display_options == false) {
         if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && SDL_GetAudioStreamQueued(sounds[3].stream) == 0) {
             // Up key pressed
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
@@ -205,10 +207,44 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                     SDL_ClearAudioStream(sounds[3].stream);
                     SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
                     // display_menu = false;
+                } else if (menu_choice == OPTIONS) {
+                    SDL_ClearAudioStream(sounds[3].stream);
+                    SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                    display_menu = false;
+                    display_options = true;
                 } else if (menu_choice == QUIT) {
                     event->type = SDL_EVENT_QUIT;
                 }
             }
+        }
+    } else if (display_menu == false && display_options == true) {
+        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
+            // Up key pressed
+            if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                SDL_ClearAudioStream(sounds[2].stream);
+                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                options_choice = static_cast<Options>((options_choice + 1) % (PADDLE_SPEED+1));
+            }
+
+            if (event->key.scancode == SDL_SCANCODE_UP) {
+                SDL_ClearAudioStream(sounds[2].stream);
+                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                if (options_choice == 0) {
+                    options_choice = PADDLE_SPEED;
+                } else {
+                    options_choice = static_cast<Options>((options_choice - 1) % (PADDLE_SPEED+1));
+                }
+            }
+            
+            // if (event->key.scancode == SDL_SCANCODE_RETURN) {
+            //     if (menu_choice == PLAY) {
+            //         SDL_ClearAudioStream(sounds[3].stream);
+            //         SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+            //         // display_menu = false;
+            //     } else if (menu_choice == QUIT) {
+            //         event->type = SDL_EVENT_QUIT;
+            //     }
+            // }
         }
     }
 
@@ -266,7 +302,41 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, 2*GAME_WIDTH/10, GAME_HEIGHT/5+30, "QUIT");
         }
         // SDL_RenderDebugTextFormat(renderer, 3*GAME_WIDTH/4, 100, "%d", s_score_cpu);
-    } else if (display_menu == false && display_options == false){
+    } else if (display_menu == false && display_options == true) {
+        // SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
+        // SDL_RenderClear(renderer);
+        // SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+
+        // SDL_SetRenderScale(renderer, 4.0f, 4.0f);
+        // SDL_RenderDebugText(renderer, GAME_WIDTH/12, GAME_HEIGHT/15, "PONG");
+
+        SDL_SetRenderScale(renderer, 2.0f, 2.0f);
+        if (options_choice == RESOLUTION) {
+            // if (SDL_GetAudioStreamQueued(sounds[3].stream) == 0 ||
+                    // (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && (now / 250) % 2 == 0)) {
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
+            // }
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+        } else if (options_choice == BALL_SPEED) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+        } else if (options_choice == PADDLE_SPEED) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+        }
+    } else if (display_menu == false && display_options == false) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
