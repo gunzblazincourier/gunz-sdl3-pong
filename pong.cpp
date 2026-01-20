@@ -14,7 +14,7 @@
 static bool display_menu = true;
 static bool display_options = false;
 enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
-enum Options {RESOLUTION = 0, BALL_SPEED = 1, PADDLE_SPEED = 2};
+enum Options {RESOLUTION = 0, BALL_SPEED = 1, PADDLE_SPEED = 2, BACK = 3};
 static Menu menu_choice = PLAY;
 static Options options_choice = RESOLUTION;
 
@@ -204,12 +204,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             
             if (event->key.scancode == SDL_SCANCODE_RETURN) {
                 if (menu_choice == PLAY) {
+                    // std::cout << "zsfgvrb" << std::endl;
                     SDL_ClearAudioStream(sounds[3].stream);
                     SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
                     // display_menu = false;
                 } else if (menu_choice == OPTIONS) {
-                    SDL_ClearAudioStream(sounds[3].stream);
-                    SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                    // SDL_ClearAudioStream(sounds[3].stream);
+                    // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
                     display_menu = false;
                     display_options = true;
                 } else if (menu_choice == QUIT) {
@@ -223,28 +224,29 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
                 SDL_ClearAudioStream(sounds[2].stream);
                 SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
-                options_choice = static_cast<Options>((options_choice + 1) % (PADDLE_SPEED+1));
+                options_choice = static_cast<Options>((options_choice + 1) % (BACK+1));
             }
 
             if (event->key.scancode == SDL_SCANCODE_UP) {
                 SDL_ClearAudioStream(sounds[2].stream);
                 SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
                 if (options_choice == 0) {
-                    options_choice = PADDLE_SPEED;
+                    options_choice = BACK;
                 } else {
-                    options_choice = static_cast<Options>((options_choice - 1) % (PADDLE_SPEED+1));
+                    options_choice = static_cast<Options>((options_choice - 1) % (BACK+1));
                 }
             }
             
-            // if (event->key.scancode == SDL_SCANCODE_RETURN) {
-            //     if (menu_choice == PLAY) {
-            //         SDL_ClearAudioStream(sounds[3].stream);
-            //         SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
-            //         // display_menu = false;
-            //     } else if (menu_choice == QUIT) {
-            //         event->type = SDL_EVENT_QUIT;
-            //     }
-            // }
+            if (event->key.scancode == SDL_SCANCODE_RETURN) {
+                if (options_choice == BACK) {
+                    // SDL_ClearAudioStream(sounds[3].stream);
+                    // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                    display_menu = true;
+                    display_options = false;
+                // } else if (menu_choice == QUIT) {
+                //     event->type = SDL_EVENT_QUIT;
+                }
+            }
         }
     }
 
@@ -257,6 +259,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    // std::cout << (int)(SDL_GetAudioStreamQueued(sounds[3].stream)) << std::endl;
+    // std::cout << display_menu << " . " << display_options << std::endl;
     if (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && SDL_GetAudioStreamQueued(sounds[3].stream) < 1000) {
         // std::cout << (int)(SDL_GetAudioStreamQueued(sounds[3].stream)) << std::endl;
         display_menu = false;
@@ -321,6 +325,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
         } else if (options_choice == BALL_SPEED) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
@@ -328,6 +334,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
         } else if (options_choice == PADDLE_SPEED) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
@@ -335,8 +343,20 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
+        } else if (options_choice == BACK) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
         }
     } else if (display_menu == false && display_options == false) {
+        // std::cout << "SDFV" << std::endl;
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
