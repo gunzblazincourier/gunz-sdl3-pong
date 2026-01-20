@@ -14,7 +14,7 @@
 static bool display_menu = true;
 static bool display_options = false;
 enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
-enum Options {RESOLUTION = 0, BALL_SPEED = 1, PADDLE_SPEED = 2, BACK = 3};
+enum Options {RESOLUTION = 0, FULLSCREEN = 1, BALL_SPEED = 2, PADDLE_SPEED = 3, BACK = 4};
 static Menu menu_choice = PLAY;
 static Options options_choice = RESOLUTION;
 
@@ -322,38 +322,57 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
             // }
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Fullscreen");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Ball Speed");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
-        } else if (options_choice == BALL_SPEED) {
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+60, "BACK");
+        } else if (options_choice == FULLSCREEN) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Fullscreen");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Ball Speed");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+60, "BACK");
+        } else if (options_choice == BALL_SPEED) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+60, "BACK");
         } else if (options_choice == PADDLE_SPEED) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Fullscreen");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "Paddle Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+60, "BACK");
         } else if (options_choice == BACK) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Ball Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "Fullscreen");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Paddle Speed");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "Ball Speed");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "Paddle Speed");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+45, "BACK");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+60, "BACK");
         }
     } else if (display_menu == false && display_options == false) {
         // std::cout << "SDFV" << std::endl;
