@@ -249,7 +249,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             }
             
             if (event->key.scancode == SDL_SCANCODE_RETURN) {
-                if (options_choice == BACK) {
+                if (options_choice == APPLY) {
+                    SDL_SetWindowFullscreen(window, is_fullscreen);
+                } else if (options_choice == BACK) {
                     // SDL_ClearAudioStream(sounds[3].stream);
                     // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
                     display_menu = true;
