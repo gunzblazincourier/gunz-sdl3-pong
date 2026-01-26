@@ -15,13 +15,15 @@ static bool display_menu = true;
 static bool display_options = false;
 
 enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
-enum Options {RESOLUTION = 0, FULLSCREEN = 1, BALL_SPEED = 2, PADDLE_SPEED = 3, APPLY = 4, BACK = 5};
+enum Options {RESOLUTION = 0, FULLSCREEN = 1, AUDIO = 2, BALL_SPEED = 3, PADDLE_SPEED = 4, APPLY = 5, BACK = 6};
 enum Resolutions {VGA = 0, SVGA = 1, HD = 2, XGA = 3, WXGA = 4, SXGA = 5, FHD = 6, QHD = 7};
 static Menu menu_choice = PLAY;
 static Options options_choice = RESOLUTION;
 static Resolutions resolution_choice = VGA;
 
 static bool is_fullscreen = true;
+static bool is_audio_enabled = true;
+static int play_timer = 0;
 
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Window *window = NULL;
@@ -188,7 +190,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             }
         }
     } else if (display_menu == true && display_options == false) {
-        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && SDL_GetAudioStreamQueued(sounds[3].stream) == 0) {
+        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && play_timer == 0) {
             // Up key pressed
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
                 SDL_ClearAudioStream(sounds[2].stream);
@@ -211,6 +213,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                     // std::cout << "zsfgvrb" << std::endl;
                     SDL_ClearAudioStream(sounds[3].stream);
                     SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                    play_timer = 501760;
                     // display_menu = false;
                 } else if (menu_choice == OPTIONS) {
                     // SDL_ClearAudioStream(sounds[3].stream);
@@ -257,6 +260,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
                     resolution_choice = static_cast<Resolutions>((resolution_choice + 1) % (QHD+1));
                 }
+            } else if (options_choice == AUDIO) {
+                if (event->key.scancode == SDL_SCANCODE_LEFT && is_audio_enabled == false) {
+                    is_audio_enabled = true;
+                } else if (event->key.scancode == SDL_SCANCODE_RIGHT && is_audio_enabled == true) {
+                    is_audio_enabled = false;
+                }
             }
             
             if (event->key.scancode == SDL_SCANCODE_RETURN) {
@@ -288,6 +297,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                         WINDOW_HEIGHT = 1440;
                     }
                     SDL_SetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                    if (is_audio_enabled == false) {
+                        SDL_PauseAudioStreamDevice(sounds->stream);
+                    } else {
+                        SDL_ResumeAudioStreamDevice(sounds->stream);
+                    }
                 } else if (options_choice == BACK) {
                     // SDL_ClearAudioStream(sounds[3].stream);
                     // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
@@ -309,10 +324,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    if (play_timer > 0) {
+        play_timer -= 30;
+    }
+
     // std::cout << 4*(GAME_WIDTH/7) << std::endl;
-    // std::cout << is_fullscreen << std::endl;
+    // std::cout << SDL_GetAudioStreamQueued(sounds[3].stream) << std::endl;
+    // std::cout << play_timer << std::endl;
     // std::cout << display_menu << " . " << display_options << std::endl;
-    if (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && SDL_GetAudioStreamQueued(sounds[3].stream) < 1000) {
+    if (play_timer > 0 && play_timer < 1000) {
         // std::cout << (int)(SDL_GetAudioStreamQueued(sounds[3].stream)) << std::endl;
         display_menu = false;
     }
@@ -332,8 +352,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         SDL_SetRenderScale(renderer, 2.0f, 2.0f);
         if (menu_choice == PLAY) {
-            if (SDL_GetAudioStreamQueued(sounds[3].stream) == 0 ||
-                    (SDL_GetAudioStreamQueued(sounds[3].stream) > 0 && (now / 250) % 2 == 0)) {
+            if (play_timer == 0 ||
+                    (play_timer > 0 && (now / 250) % 2 == 0)) {
                 SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
                 SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
             }
@@ -361,6 +381,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_FRect fullscreen_choice;
         fullscreen_choice.w = 4;
         fullscreen_choice.h = 4;
+
+        SDL_FRect audio_choice;
+        audio_choice.w = 4;
+        audio_choice.h = 4;
         // SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
         // SDL_RenderClear(renderer);
         // SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -371,38 +395,52 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_SetRenderScale(renderer, 2.0f, 2.0f);
         if (options_choice == RESOLUTION) {
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
             
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -419,38 +457,114 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         } else if (options_choice == FULLSCREEN) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
+            } else {
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
+
+        } else if (options_choice == AUDIO) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            if (resolution_choice == VGA) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
+            } else if (resolution_choice == SVGA) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
+            } else if (resolution_choice == HD) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
+            } else if (resolution_choice == XGA) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
+            } else if (resolution_choice == WXGA) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
+            } else if (resolution_choice == SXGA) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
+            } else if (resolution_choice == FHD) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
+            } else if (resolution_choice == QHD) {
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -467,38 +581,52 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         } else if (options_choice == BALL_SPEED) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
 
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
@@ -515,38 +643,52 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         } else if (options_choice == PADDLE_SPEED) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -563,38 +705,52 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         } else if (options_choice == APPLY) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -611,38 +767,51 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         } else if (options_choice == BACK) {
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Resolution");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "640x480");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "800x600");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
             } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1280x720");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
             } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1024x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
             } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1366x768");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
             } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "12801024");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
             } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "1920x1080");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
             } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "2560x1440");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Fullscreen");
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+            if (is_fullscreen == true) {
+                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            } else {
+                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
+                fullscreen_choice.y = GAME_HEIGHT/5;
+            }
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+            if (is_audio_enabled == true) {
+                audio_choice.x = 7*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 10;
-                fullscreen_choice.y = GAME_HEIGHT/5+15;
+                audio_choice.x = 8*GAME_WIDTH/20 - 10;
+                audio_choice.y = GAME_HEIGHT/5+15;
             }
 
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -661,6 +830,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
         SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &fullscreen_choice);
+        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &audio_choice);
     } else if (display_menu == false && display_options == false) {
         // std::cout << "SDFV" << std::endl;
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
