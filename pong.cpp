@@ -14,11 +14,13 @@
 static bool display_menu = true;
 static bool display_options = false;
 
+enum Window {MAIN = 0, CONFIG = 1, GAME = 2};
 enum Menu {PLAY = 0, OPTIONS = 1, QUIT = 2};
 enum Options {RESOLUTION = 0, FULLSCREEN = 1, AUDIO = 2, BALL_SPEED = 3, PADDLE_SPEED = 4, APPLY = 5, BACK = 6};
 enum Resolutions {VGA = 0, SVGA = 1, HD = 2, XGA = 3, WXGA = 4, SXGA = 5, FHD = 6, QHD = 7};
 enum BallSpeed {B_LOW = 0, B_MEDIUM = 1, B_HIGH = 2};
 enum PaddleSpeed {P_LOW = 0, P_MEDIUM = 1, P_HIGH = 2};
+static Window window_choice = MAIN;
 static Menu menu_choice = PLAY;
 static Options options_choice = RESOLUTION;
 static Resolutions resolution_choice = VGA;
@@ -173,7 +175,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-    if (display_menu == false && display_options == false) {
+    // if (display_menu == false && display_options == false) {
+    if (window_choice == GAME) {
         // For when key is pressed
         if (event->type == SDL_EVENT_KEY_DOWN) {
             // Up key pressed
@@ -195,7 +198,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 s_direction_player = ZERO;
             }
         }
-    } else if (display_menu == true && display_options == false) {
+    // } else if (display_menu == true && display_options == false) {
+    } else if (window_choice == MAIN) {
         if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && play_timer == 0) {
             // Up key pressed
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
@@ -224,14 +228,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 } else if (menu_choice == OPTIONS) {
                     // SDL_ClearAudioStream(sounds[3].stream);
                     // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
-                    display_menu = false;
-                    display_options = true;
+                    // display_menu = false;
+                    // display_options = true;
+                    window_choice = CONFIG;
                 } else if (menu_choice == QUIT) {
                     event->type = SDL_EVENT_QUIT;
                 }
             }
         }
-    } else if (display_menu == false && display_options == true) {
+    } else if (window_choice == CONFIG) {
         if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
             // Up key pressed
             if (event->key.scancode == SDL_SCANCODE_DOWN) {
@@ -348,8 +353,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
                 } else if (options_choice == BACK) {
                     // SDL_ClearAudioStream(sounds[3].stream);
                     // SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
-                    display_menu = true;
-                    display_options = false;
+                    // display_menu = true;
+                    // display_options = false;
+                    window_choice = MAIN;
                 // } else if (menu_choice == QUIT) {
                 //     event->type = SDL_EVENT_QUIT;
                 }
@@ -376,7 +382,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     // std::cout << display_menu << " . " << display_options << std::endl;
     if (play_timer > 0 && play_timer < 1000) {
         // std::cout << (int)(SDL_GetAudioStreamQueued(sounds[3].stream)) << std::endl;
-        display_menu = false;
+        // display_menu = false;
+        window_choice = GAME;
     }
     /* Get the number of milliseconds that have elapsed since the SDL library initialization */
     const Uint64 now = SDL_GetTicks();
@@ -384,7 +391,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     // std::cout << now << std::endl;
 
-    if (display_menu == true && display_options == false) {
+    // if (display_menu == true && display_options == false) {
+    if (window_choice == MAIN) {
         SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
@@ -419,7 +427,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             SDL_RenderDebugText(renderer, 2*GAME_WIDTH/10, GAME_HEIGHT/5+30, "QUIT");
         }
         // SDL_RenderDebugTextFormat(renderer, 3*GAME_WIDTH/4, 100, "%d", s_score_cpu);
-    } else if (display_menu == false && display_options == true) {
+    // } else if (display_menu == false && display_options == true) {
+    } else if (window_choice == CONFIG) {
         SDL_FRect fullscreen_choice;
         fullscreen_choice.w = 4;
         fullscreen_choice.h = 4;
@@ -1104,7 +1113,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         SDL_RenderFillRect(renderer, &ball_speed_choice);
         SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &paddle_speed_choice);
-    } else if (display_menu == false && display_options == false) {
+    // } else if (display_menu == false && display_options == false) {
+    } else if (window_choice == GAME) {
         // std::cout << "SDFV" << std::endl;
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
