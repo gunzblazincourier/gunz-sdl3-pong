@@ -39,6 +39,7 @@ static Option options_choice = RESOLUTION;
 static Resolution resolution_choice = VGA;
 static BallSpeed ball_speed_difficulty = B_MEDIUM;
 static PaddleSpeed paddle_speed_difficulty = P_MEDIUM;
+
 static Directions s_direction_player = ZERO;
 static Directions s_direction_cpu = UP;
 static Directions s_direction_ball_x = UP;
@@ -180,178 +181,185 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-    if (window_choice == GAME) {
-        // For when key is pressed
-        if (event->type == SDL_EVENT_KEY_DOWN) {
-            // Up key pressed
-            if (event->key.scancode == SDL_SCANCODE_UP) {
-                s_direction_player = UP;
-            // Down key pressed
-            } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-                s_direction_player = DOWN;
-            }
-        }
-
-        // For when key is released
-        if (event->type == SDL_EVENT_KEY_UP) {
-            // Up key released
-            if (event->key.scancode == SDL_SCANCODE_UP) {
-                s_direction_player = ZERO;
-            // Down key released
-            } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
-                s_direction_player = ZERO;
-            }
-        }
-
-    } else if (window_choice == MAIN) {
-        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && play_timer == 0) {
-            if (event->key.scancode == SDL_SCANCODE_DOWN) {
-                SDL_ClearAudioStream(sounds[2].stream);
-                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
-                menu_choice = static_cast<Menu>((menu_choice + 1) % (QUIT+1));
-            }
-
-            if (event->key.scancode == SDL_SCANCODE_UP) {
-                SDL_ClearAudioStream(sounds[2].stream);
-                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
-                if (menu_choice == 0) {
-                    menu_choice = QUIT;
-                } else {
-                    menu_choice = static_cast<Menu>((menu_choice - 1) % (QUIT+1));
-                }
-            }
-            
-            if (event->key.scancode == SDL_SCANCODE_RETURN) {
-                if (menu_choice == PLAY) {
-                    SDL_ClearAudioStream(sounds[3].stream);
-                    SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
-                    play_timer = 501760;    // The stream data of sounds[3]
-                } else if (menu_choice == OPTIONS) {
-                    window_choice = CONFIG;
-                } else if (menu_choice == QUIT) {
-                    event->type = SDL_EVENT_QUIT;
-                }
-            }
-        }
-
-    } else if (window_choice == CONFIG) {
-        if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
-            if (event->key.scancode == SDL_SCANCODE_DOWN) {
-                SDL_ClearAudioStream(sounds[2].stream);
-                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
-                options_choice = static_cast<Option>((options_choice + 1) % (BACK+1));
-            }
-
-            if (event->key.scancode == SDL_SCANCODE_UP) {
-                SDL_ClearAudioStream(sounds[2].stream);
-                SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
-                if (options_choice == 0) {
-                    options_choice = BACK;
-                } else {
-                    options_choice = static_cast<Option>((options_choice - 1) % (BACK+1));
+    switch (window_choice) {
+        case GAME:
+            // For when key is pressed
+            if (event->type == SDL_EVENT_KEY_DOWN) {
+                // Up key pressed
+                if (event->key.scancode == SDL_SCANCODE_UP) {
+                    s_direction_player = UP;
+                // Down key pressed
+                } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                    s_direction_player = DOWN;
                 }
             }
 
-            if (options_choice == FULLSCREEN) {
-                if (event->key.scancode == SDL_SCANCODE_LEFT && is_fullscreen == false) {
-                    is_fullscreen = true;
-                } else if (event->key.scancode == SDL_SCANCODE_RIGHT && is_fullscreen == true) {
-                    is_fullscreen = false;
+            // For when key is released
+            if (event->type == SDL_EVENT_KEY_UP) {
+                // Up key released
+                if (event->key.scancode == SDL_SCANCODE_UP) {
+                    s_direction_player = ZERO;
+                // Down key released
+                } else if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                    s_direction_player = ZERO;
                 }
-            } else if (options_choice == RESOLUTION) {
-                if (event->key.scancode == SDL_SCANCODE_LEFT) {
-                    if (resolution_choice == 0) {
-                        resolution_choice = QHD;
+            }
+            break;
+        
+        case MAIN:
+            if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false && play_timer == 0) {
+                if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                    menu_choice = static_cast<Menu>((menu_choice + 1) % (QUIT+1));
+                }
+
+                if (event->key.scancode == SDL_SCANCODE_UP) {
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                    if (menu_choice == 0) {
+                        menu_choice = QUIT;
                     } else {
-                        resolution_choice = static_cast<Resolution>((resolution_choice - 1) % (QHD+1));
+                        menu_choice = static_cast<Menu>((menu_choice - 1) % (QUIT+1));
                     }
-                } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
-                    resolution_choice = static_cast<Resolution>((resolution_choice + 1) % (QHD+1));
                 }
-            } else if (options_choice == AUDIO) {
-                if (event->key.scancode == SDL_SCANCODE_LEFT && is_audio_enabled == false) {
-                    is_audio_enabled = true;
-                } else if (event->key.scancode == SDL_SCANCODE_RIGHT && is_audio_enabled == true) {
-                    is_audio_enabled = false;
-                }
-            } else if (options_choice == BALL_SPEED) {
-                if (event->key.scancode == SDL_SCANCODE_LEFT) {
-                    if (ball_speed_difficulty == 0) {
-                        ball_speed_difficulty = B_HIGH;
-                    } else {
-                        ball_speed_difficulty = static_cast<BallSpeed>((ball_speed_difficulty - 1) % (B_HIGH+1));
+                
+                if (event->key.scancode == SDL_SCANCODE_RETURN) {
+                    if (menu_choice == PLAY) {
+                        SDL_ClearAudioStream(sounds[3].stream);
+                        SDL_PutAudioStreamData(sounds[3].stream, sounds[3].wav_data, (int) sounds[3].wav_data_len);
+                        play_timer = 501760;    // The stream data of sounds[3]
+                    } else if (menu_choice == OPTIONS) {
+                        window_choice = CONFIG;
+                    } else if (menu_choice == QUIT) {
+                        event->type = SDL_EVENT_QUIT;
                     }
-                } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
-                    ball_speed_difficulty = static_cast<BallSpeed>((ball_speed_difficulty + 1) % (B_HIGH+1));
-                }
-            } else if (options_choice == PADDLE_SPEED) {
-                if (event->key.scancode == SDL_SCANCODE_LEFT) {
-                    if (paddle_speed_difficulty == 0) {
-                        paddle_speed_difficulty = P_HIGH;
-                    } else {
-                        paddle_speed_difficulty = static_cast<PaddleSpeed>((paddle_speed_difficulty - 1) % (P_HIGH+1));
-                    }
-                } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
-                    paddle_speed_difficulty = static_cast<PaddleSpeed>((paddle_speed_difficulty + 1) % (P_HIGH+1));
                 }
             }
-            
-            if (event->key.scancode == SDL_SCANCODE_RETURN) {
-                if (options_choice == APPLY) {
-                    SDL_SetWindowFullscreen(window, is_fullscreen);
-                    if (resolution_choice == VGA) {
-                        WINDOW_WIDTH = 640;
-                        WINDOW_HEIGHT = 480;
-                    } else if (resolution_choice == SVGA) {
-                        WINDOW_WIDTH = 800;
-                        WINDOW_HEIGHT = 600;
-                    } else if (resolution_choice == HD) {
-                        WINDOW_WIDTH = 1280;
-                        WINDOW_HEIGHT = 720;
-                    } else if (resolution_choice == XGA) {
-                        WINDOW_WIDTH = 1024;
-                        WINDOW_HEIGHT = 768;
-                    } else if (resolution_choice == WXGA) {
-                        WINDOW_WIDTH = 1366;
-                        WINDOW_HEIGHT = 768;
-                    } else if (resolution_choice == SXGA) {
-                        WINDOW_WIDTH = 1280;
-                        WINDOW_HEIGHT = 1024;
-                    } else if (resolution_choice == FHD) {
-                        WINDOW_WIDTH = 1920;
-                        WINDOW_HEIGHT = 1080;
-                    } else if (resolution_choice == QHD) {
-                        WINDOW_WIDTH = 2560;
-                        WINDOW_HEIGHT = 1440;
-                    }
-                    SDL_SetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
+            break;
 
-                    if (is_audio_enabled == false) {
-                        SDL_PauseAudioStreamDevice(sounds->stream);
+        case CONFIG:
+            if (event->type == SDL_EVENT_KEY_DOWN && event->key.repeat == false) {
+                if (event->key.scancode == SDL_SCANCODE_DOWN) {
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                    options_choice = static_cast<Option>((options_choice + 1) % (BACK+1));
+                }
+
+                if (event->key.scancode == SDL_SCANCODE_UP) {
+                    SDL_ClearAudioStream(sounds[2].stream);
+                    SDL_PutAudioStreamData(sounds[2].stream, sounds[2].wav_data, (int) sounds[2].wav_data_len);
+                    if (options_choice == 0) {
+                        options_choice = BACK;
                     } else {
-                        SDL_ResumeAudioStreamDevice(sounds->stream);
+                        options_choice = static_cast<Option>((options_choice - 1) % (BACK+1));
                     }
+                }
 
-                    if (ball_speed_difficulty == B_LOW) {
-                        ball_speed_multiplier = 0.3;
-                    } else if (ball_speed_difficulty == B_MEDIUM) {
-                        ball_speed_multiplier = 0.6;
-                    } else if (ball_speed_difficulty == B_HIGH) {
-                        ball_speed_multiplier = 1.0;
+                if (options_choice == FULLSCREEN) {
+                    if (event->key.scancode == SDL_SCANCODE_LEFT && is_fullscreen == false) {
+                        is_fullscreen = true;
+                    } else if (event->key.scancode == SDL_SCANCODE_RIGHT && is_fullscreen == true) {
+                        is_fullscreen = false;
                     }
+                } else if (options_choice == RESOLUTION) {
+                    if (event->key.scancode == SDL_SCANCODE_LEFT) {
+                        if (resolution_choice == 0) {
+                            resolution_choice = QHD;
+                        } else {
+                            resolution_choice = static_cast<Resolution>((resolution_choice - 1) % (QHD+1));
+                        }
+                    } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
+                        resolution_choice = static_cast<Resolution>((resolution_choice + 1) % (QHD+1));
+                    }
+                } else if (options_choice == AUDIO) {
+                    if (event->key.scancode == SDL_SCANCODE_LEFT && is_audio_enabled == false) {
+                        is_audio_enabled = true;
+                    } else if (event->key.scancode == SDL_SCANCODE_RIGHT && is_audio_enabled == true) {
+                        is_audio_enabled = false;
+                    }
+                } else if (options_choice == BALL_SPEED) {
+                    if (event->key.scancode == SDL_SCANCODE_LEFT) {
+                        if (ball_speed_difficulty == 0) {
+                            ball_speed_difficulty = B_HIGH;
+                        } else {
+                            ball_speed_difficulty = static_cast<BallSpeed>((ball_speed_difficulty - 1) % (B_HIGH+1));
+                        }
+                    } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
+                        ball_speed_difficulty = static_cast<BallSpeed>((ball_speed_difficulty + 1) % (B_HIGH+1));
+                    }
+                } else if (options_choice == PADDLE_SPEED) {
+                    if (event->key.scancode == SDL_SCANCODE_LEFT) {
+                        if (paddle_speed_difficulty == 0) {
+                            paddle_speed_difficulty = P_HIGH;
+                        } else {
+                            paddle_speed_difficulty = static_cast<PaddleSpeed>((paddle_speed_difficulty - 1) % (P_HIGH+1));
+                        }
+                    } else if (event->key.scancode == SDL_SCANCODE_RIGHT) {
+                        paddle_speed_difficulty = static_cast<PaddleSpeed>((paddle_speed_difficulty + 1) % (P_HIGH+1));
+                    }
+                }
+                
+                if (event->key.scancode == SDL_SCANCODE_RETURN) {
+                    if (options_choice == APPLY) {
+                        SDL_SetWindowFullscreen(window, is_fullscreen);
+                        if (resolution_choice == VGA) {
+                            WINDOW_WIDTH = 640;
+                            WINDOW_HEIGHT = 480;
+                        } else if (resolution_choice == SVGA) {
+                            WINDOW_WIDTH = 800;
+                            WINDOW_HEIGHT = 600;
+                        } else if (resolution_choice == HD) {
+                            WINDOW_WIDTH = 1280;
+                            WINDOW_HEIGHT = 720;
+                        } else if (resolution_choice == XGA) {
+                            WINDOW_WIDTH = 1024;
+                            WINDOW_HEIGHT = 768;
+                        } else if (resolution_choice == WXGA) {
+                            WINDOW_WIDTH = 1366;
+                            WINDOW_HEIGHT = 768;
+                        } else if (resolution_choice == SXGA) {
+                            WINDOW_WIDTH = 1280;
+                            WINDOW_HEIGHT = 1024;
+                        } else if (resolution_choice == FHD) {
+                            WINDOW_WIDTH = 1920;
+                            WINDOW_HEIGHT = 1080;
+                        } else if (resolution_choice == QHD) {
+                            WINDOW_WIDTH = 2560;
+                            WINDOW_HEIGHT = 1440;
+                        }
+                        SDL_SetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-                    if (paddle_speed_difficulty == P_LOW) {
-                        paddle_speed_multiplier = 0.3;
-                    } else if (paddle_speed_difficulty == P_MEDIUM) {
-                        paddle_speed_multiplier = 0.6;
-                    } else if (paddle_speed_difficulty == P_HIGH) {
-                        paddle_speed_multiplier = 1.0;
+                        if (is_audio_enabled == false) {
+                            SDL_PauseAudioStreamDevice(sounds->stream);
+                        } else {
+                            SDL_ResumeAudioStreamDevice(sounds->stream);
+                        }
+
+                        if (ball_speed_difficulty == B_LOW) {
+                            ball_speed_multiplier = 0.3;
+                        } else if (ball_speed_difficulty == B_MEDIUM) {
+                            ball_speed_multiplier = 0.6;
+                        } else if (ball_speed_difficulty == B_HIGH) {
+                            ball_speed_multiplier = 1.0;
+                        }
+
+                        if (paddle_speed_difficulty == P_LOW) {
+                            paddle_speed_multiplier = 0.3;
+                        } else if (paddle_speed_difficulty == P_MEDIUM) {
+                            paddle_speed_multiplier = 0.6;
+                        } else if (paddle_speed_difficulty == P_HIGH) {
+                            paddle_speed_multiplier = 1.0;
+                        }
+                    } else if (options_choice == BACK) {
+                        window_choice = MAIN;
                     }
-                } else if (options_choice == BACK) {
-                    window_choice = MAIN;
                 }
             }
-        }
+            break;
+        
+        default:
+            SDL_Log("Invalid window choice!");
     }
 
     if (event->type == SDL_EVENT_QUIT) {
@@ -376,63 +384,60 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     const Uint64 now = SDL_GetTicks();
     const float deltatime = ((float) (now - last_time)) / 1000.0f;
 
-    if (window_choice == MAIN) {
-        SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+    switch (window_choice) {
+        case MAIN:
+            SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
 
-        SDL_SetRenderScale(renderer, 4.0f, 4.0f);
-        SDL_RenderDebugText(renderer, GAME_WIDTH/12, GAME_HEIGHT/15, "PONG");
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderScale(renderer, 4.0f, 4.0f);
+            SDL_RenderDebugText(renderer, GAME_WIDTH/12, GAME_HEIGHT/15, "PONG");
 
-        SDL_SetRenderScale(renderer, 2.0f, 2.0f);
-        if (menu_choice == PLAY) {
+            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderScale(renderer, 2.0f, 2.0f);
             if (play_timer == 0 ||
                     (play_timer > 0 && (now / 250) % 2 == 0)) {
-                SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
                 SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
             }
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "OPTIONS");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "QUIT");
-        } else if (menu_choice == OPTIONS) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
+
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "OPTIONS");
+            if (menu_choice == PLAY) {
+                if (play_timer == 0 ||
+                        (play_timer > 0 && (now / 250) % 2 == 0)) {
+                    SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
+                }
+            } else if (menu_choice == OPTIONS) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "OPTIONS");
+            } else if (menu_choice == QUIT) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "QUIT");
+            }
+            break;
+        
+        case CONFIG:
+            SDL_FRect fullscreen_choice;
+            fullscreen_choice.w = 4;
+            fullscreen_choice.h = 4;
+
+            SDL_FRect audio_choice;
+            audio_choice.w = 4;
+            audio_choice.h = 4;
+
+            SDL_FRect ball_speed_choice;
+            ball_speed_choice.w = 4;
+            ball_speed_choice.h = 4;
+
+            SDL_FRect paddle_speed_choice;
+            paddle_speed_choice.w = 4;
+            paddle_speed_choice.h = 4;
+
+            SDL_SetRenderDrawColor(renderer, 0, 32, 63, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+
             SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "QUIT");
-        } else if (menu_choice == QUIT) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5, "PLAY");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+15, "OPTIONS");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/5, GAME_HEIGHT/5+30, "QUIT");
-        }
-
-    } else if (window_choice == CONFIG) {
-        SDL_FRect fullscreen_choice;
-        fullscreen_choice.w = 4;
-        fullscreen_choice.h = 4;
-
-        SDL_FRect audio_choice;
-        audio_choice.w = 4;
-        audio_choice.h = 4;
-
-        SDL_FRect ball_speed_choice;
-        ball_speed_choice.w = 4;
-        ball_speed_choice.h = 4;
-
-        SDL_FRect paddle_speed_choice;
-        paddle_speed_choice.w = 4;
-        paddle_speed_choice.h = 4;
-
-        SDL_SetRenderScale(renderer, 2.0f, 2.0f);
-        if (options_choice == RESOLUTION) {
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderScale(renderer, 2.0f, 2.0f);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
             if (resolution_choice == VGA) {
                 SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
             } else if (resolution_choice == SVGA) {
@@ -451,11 +456,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
             }
 
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
             if (is_fullscreen == true) {
                 fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
@@ -465,11 +467,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 fullscreen_choice.y = GAME_HEIGHT/5;
             }
 
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
             if (is_audio_enabled == true) {
                 audio_choice.x = 7*GAME_WIDTH/20 - 5;
@@ -479,13 +478,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 audio_choice.y = GAME_HEIGHT/5+15;
             }
             
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
             if (ball_speed_difficulty == B_LOW) {
                 ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
@@ -498,12 +493,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 ball_speed_choice.y = GAME_HEIGHT/5+30;
             }
 
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
             SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
             if (paddle_speed_difficulty == P_LOW) {
                 paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
@@ -516,732 +508,257 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 paddle_speed_choice.y = GAME_HEIGHT/5+45;
             }
 
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
             SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
 
-        } else if (options_choice == FULLSCREEN) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
+            SDL_RenderFillRect(renderer, &fullscreen_choice);
+            SDL_RenderFillRect(renderer, &audio_choice);
+            SDL_RenderFillRect(renderer, &ball_speed_choice);
+            SDL_RenderFillRect(renderer, &paddle_speed_choice);
 
             SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
+            if (options_choice == RESOLUTION) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
+                if (resolution_choice == VGA) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
+                } else if (resolution_choice == SVGA) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
+                } else if (resolution_choice == HD) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
+                } else if (resolution_choice == XGA) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
+                } else if (resolution_choice == WXGA) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
+                } else if (resolution_choice == SXGA) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
+                } else if (resolution_choice == FHD) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
+                } else if (resolution_choice == QHD) {
+                    SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
+                }
+
+            } else if (options_choice == FULLSCREEN) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
+                SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
+                if (is_fullscreen == true) {
+                    fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
+                    fullscreen_choice.y = GAME_HEIGHT/5;
+                } else {
+                    fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
+                    fullscreen_choice.y = GAME_HEIGHT/5;
+                }
+
+            } else if (options_choice == AUDIO) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
+                SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
+                if (is_audio_enabled == true) {
+                    audio_choice.x = 7*GAME_WIDTH/20 - 5;
+                    audio_choice.y = GAME_HEIGHT/5+15;
+                } else {
+                    audio_choice.x = 8*GAME_WIDTH/20 - 5;
+                    audio_choice.y = GAME_HEIGHT/5+15;
+                }
+
+            } else if (options_choice == BALL_SPEED) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
+                SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
+                SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
+                if (ball_speed_difficulty == B_LOW) {
+                    ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
+                    ball_speed_choice.y = GAME_HEIGHT/5+30;
+                } else if (ball_speed_difficulty == B_MEDIUM) {
+                    ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
+                    ball_speed_choice.y = GAME_HEIGHT/5+30;
+                } else if (ball_speed_difficulty == B_HIGH) {
+                    ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
+                    ball_speed_choice.y = GAME_HEIGHT/5+30;
+                }
+
+            } else if (options_choice == PADDLE_SPEED) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
+                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
+                SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
+                SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
+                if (paddle_speed_difficulty == P_LOW) {
+                    paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
+                    paddle_speed_choice.y = GAME_HEIGHT/5+45;
+                } else if (paddle_speed_difficulty == P_MEDIUM) {
+                    paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
+                    paddle_speed_choice.y = GAME_HEIGHT/5+45;
+                } else if (paddle_speed_difficulty == P_HIGH) {
+                    paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
+                    paddle_speed_choice.y = GAME_HEIGHT/5+45;
+                }
+
+            } else if (options_choice == APPLY) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
+
+            } else if (options_choice == BACK) {
+                SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
             }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        } else if (options_choice == AUDIO) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        } else if (options_choice == BALL_SPEED) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        } else if (options_choice == PADDLE_SPEED) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        } else if (options_choice == APPLY) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        } else if (options_choice == BACK) {
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5-15, "Resolution");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            if (resolution_choice == VGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "640x480");
-            } else if (resolution_choice == SVGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "800x600");
-            } else if (resolution_choice == HD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1280x720");
-            } else if (resolution_choice == XGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1024x768");
-            } else if (resolution_choice == WXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1366x768");
-            } else if (resolution_choice == SXGA) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "12801024");
-            } else if (resolution_choice == FHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "1920x1080");
-            } else if (resolution_choice == QHD) {
-                SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5-15, "2560x1440");
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5, "Fullscreen");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5, "OFF");
-            if (is_fullscreen == true) {
-                fullscreen_choice.x = 7*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            } else {
-                fullscreen_choice.x = 8*GAME_WIDTH/20 - 5;
-                fullscreen_choice.y = GAME_HEIGHT/5;
-            }
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+15, "Audio");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+15, "ON");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+15, "OFF");
-            if (is_audio_enabled == true) {
-                audio_choice.x = 7*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            } else {
-                audio_choice.x = 8*GAME_WIDTH/20 - 5;
-                audio_choice.y = GAME_HEIGHT/5+15;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+30, "Ball Speed");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+30, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+30, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+30, "HIGH");
-            if (ball_speed_difficulty == B_LOW) {
-                ball_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_MEDIUM) {
-                ball_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            } else if (ball_speed_difficulty == B_HIGH) {
-                ball_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                ball_speed_choice.y = GAME_HEIGHT/5+30;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+45, "Paddle Speed");
-            SDL_RenderDebugText(renderer, 7*GAME_WIDTH/20, GAME_HEIGHT/5+45, "LOW");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 8*GAME_WIDTH/20, GAME_HEIGHT/5+45, "MED");
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, 9*GAME_WIDTH/20, GAME_HEIGHT/5+45, "HIGH");
-            if (paddle_speed_difficulty == P_LOW) {
-                paddle_speed_choice.x = 7*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_MEDIUM) {
-                paddle_speed_choice.x = 8*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            } else if (paddle_speed_difficulty == P_HIGH) {
-                paddle_speed_choice.x = 9*GAME_WIDTH/20 - 5;
-                paddle_speed_choice.y = GAME_HEIGHT/5+45;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+70, "APPLY");
-
-            SDL_SetRenderDrawColor(renderer, 214, 237, 23, SDL_ALPHA_OPAQUE);
-            SDL_RenderDebugText(renderer, GAME_WIDTH/7, GAME_HEIGHT/5+80, "BACK");
-
-        }
-
-        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &fullscreen_choice);
-        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &audio_choice);
-        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &ball_speed_choice);
-        SDL_SetRenderDrawColor(renderer, 173, 239, 209, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &paddle_speed_choice);
-
-    } else if (window_choice == GAME) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
-        SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-
-        /* If less than a full copy of the audio is queued for playback, put another copy in there.
-            This is overkill, but easy when lots of RAM is cheap. One could be more careful and
-            queue less at a time, as long as the stream doesn't run dry.  */
-        if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
-            SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
-        }
+            break;
         
-        SDL_FRect background;
-        SDL_FRect paddle_player;
-        SDL_FRect paddle_cpu;
-        SDL_FRect ball;
+        // Braces added for this case to prevent 'jump to case label' errors
+        case GAME:
+        {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
+            SDL_SetRenderScale(renderer, 1.0f, 1.0f);
 
-        // Background covering only viewport and not entire screen
-        background.x = 0;
-        background.y = 0;
-        background.w = GAME_WIDTH;
-        background.h = GAME_HEIGHT;
+            /* If less than a full copy of the audio is queued for playback, put another copy in there.
+                This is overkill, but easy when lots of RAM is cheap. One could be more careful and
+                queue less at a time, as long as the stream doesn't run dry.  */
+            if (SDL_GetAudioStreamQueued(sounds[0].stream) < ((int) sounds[0].wav_data_len)) {
+                SDL_PutAudioStreamData(sounds[0].stream, sounds[0].wav_data, (int) sounds[0].wav_data_len);
+            }
+            
+            SDL_FRect background;
+            SDL_FRect paddle_player;
+            SDL_FRect paddle_cpu;
+            SDL_FRect ball;
 
-        // Left edge of screen
-        paddle_player.x = 5;
-        paddle_player.y = s_position_player_y;
-        paddle_player.w = 10;
-        paddle_player.h = 60;
+            // Background covering only viewport and not entire screen
+            background.x = 0;
+            background.y = 0;
+            background.w = GAME_WIDTH;
+            background.h = GAME_HEIGHT;
+
+            // Left edge of screen
+            paddle_player.x = 5;
+            paddle_player.y = s_position_player_y;
+            paddle_player.w = 10;
+            paddle_player.h = 60;
 
 
-        // Right edge of screen
-        paddle_cpu.x = GAME_WIDTH - 15;
-        paddle_cpu.y = s_position_cpu_y;
-        paddle_cpu.w = 10;
-        paddle_cpu.h = 60;
+            // Right edge of screen
+            paddle_cpu.x = GAME_WIDTH - 15;
+            paddle_cpu.y = s_position_cpu_y;
+            paddle_cpu.w = 10;
+            paddle_cpu.h = 60;
 
-        // Top and bottom of each paddles to assist in ball collisions
-        float paddle_player_top = paddle_player.y + 4;
-        float paddle_player_bottom = paddle_player_top + paddle_player.h - 4;
-        float paddle_cpu_top = paddle_cpu.y + 4;
-        float paddle_cpu_bottom = paddle_cpu_top + paddle_cpu.h - 4;
+            // Top and bottom of each paddles to assist in ball collisions
+            float paddle_player_top = paddle_player.y + 4;
+            float paddle_player_bottom = paddle_player_top + paddle_player.h - 4;
+            float paddle_cpu_top = paddle_cpu.y + 4;
+            float paddle_cpu_bottom = paddle_cpu_top + paddle_cpu.h - 4;
 
-        // Bound player to screen if exceeding window limit, else move player paddle
-        if (s_position_player_y < 0) {
-            s_position_player_y = 0;
-        } else if (s_position_player_y > GAME_HEIGHT-paddle_player.h) {
-            s_position_player_y = GAME_HEIGHT-paddle_player.h;
-        } else {
-            s_position_player_y -= 300*s_direction_player*deltatime*paddle_speed_multiplier;
-        }
+            // Bound player to screen if exceeding window limit, else move player paddle
+            if (s_position_player_y < 0) {
+                s_position_player_y = 0;
+            } else if (s_position_player_y > GAME_HEIGHT-paddle_player.h) {
+                s_position_player_y = GAME_HEIGHT-paddle_player.h;
+            } else {
+                s_position_player_y -= 300*s_direction_player*deltatime*paddle_speed_multiplier;
+            }
 
-        // Move CPU vertically in ping-pong motion
-        s_position_cpu_y -= 250*s_direction_cpu*deltatime*paddle_speed_multiplier;
-        if (s_position_cpu_y < 0) {
-            s_direction_cpu = DOWN;
-        }
-        
-        if (s_position_cpu_y > GAME_HEIGHT-paddle_cpu.h) {
-            s_direction_cpu = UP;
-        }
+            // Move CPU vertically in ping-pong motion
+            s_position_cpu_y -= 250*s_direction_cpu*deltatime*paddle_speed_multiplier;
+            if (s_position_cpu_y < 0) {
+                s_direction_cpu = DOWN;
+            }
+            
+            if (s_position_cpu_y > GAME_HEIGHT-paddle_cpu.h) {
+                s_direction_cpu = UP;
+            }
 
-        ball.x = s_position_ball_x;
-        ball.y = s_position_ball_y;
-        ball.w = 10;
-        ball.h = 10;
+            ball.x = s_position_ball_x;
+            ball.y = s_position_ball_y;
+            ball.w = 10;
+            ball.h = 10;
 
-        // Reset x component to prevent ball getting stuck in one dimension
-        if (s_component_ball_x < 0.3 or s_component_ball_x > 0.7) {
-            s_component_ball_x = SDL_randf();
-        }
-        float s_component_ball_y = 1 - s_component_ball_x;
+            // Reset x component to prevent ball getting stuck in one dimension
+            if (s_component_ball_x < 0.3 or s_component_ball_x > 0.7) {
+                s_component_ball_x = SDL_randf();
+            }
+            float s_component_ball_y = 1 - s_component_ball_x;
 
-        s_position_ball_x -= 400*s_direction_ball_x*s_component_ball_x*deltatime*ball_speed_multiplier;
-        s_position_ball_y -= 400*s_direction_ball_y*s_component_ball_y*deltatime*ball_speed_multiplier;
+            s_position_ball_x -= 400*s_direction_ball_x*s_component_ball_x*deltatime*ball_speed_multiplier;
+            s_position_ball_y -= 400*s_direction_ball_y*s_component_ball_y*deltatime*ball_speed_multiplier;
 
-        // Handling ball collision with player
-        if (s_position_ball_x <= paddle_player.x + paddle_player.w) {
-            if (s_position_ball_y > paddle_player_top && s_position_ball_y < paddle_player_bottom) {
-                s_direction_ball_x = DOWN;
-                // Change direction of ball to direction of paddle
-                if (s_direction_player == UP) {
-                    s_direction_ball_y = UP;
-                } else if (s_direction_player == DOWN) {
-                    s_direction_ball_y = DOWN;
+            // Handling ball collision with player
+            if (s_position_ball_x <= paddle_player.x + paddle_player.w) {
+                if (s_position_ball_y > paddle_player_top && s_position_ball_y < paddle_player_bottom) {
+                    s_direction_ball_x = DOWN;
+                    // Change direction of ball to direction of paddle
+                    if (s_direction_player == UP) {
+                        s_direction_ball_y = UP;
+                    } else if (s_direction_player == DOWN) {
+                        s_direction_ball_y = DOWN;
+                    }
                 }
             }
-        }
 
-        // Handling ball collision with CPU
-        if (s_position_ball_x >= paddle_cpu.x - paddle_cpu.w) {
-            if (s_position_ball_y > paddle_cpu_top && s_position_ball_y < paddle_cpu_bottom) {
+            // Handling ball collision with CPU
+            if (s_position_ball_x >= paddle_cpu.x - paddle_cpu.w) {
+                if (s_position_ball_y > paddle_cpu_top && s_position_ball_y < paddle_cpu_bottom) {
+                    s_direction_ball_x = UP;
+                    // Change direction of ball to direction of paddle
+                    if (s_direction_cpu == UP) {
+                        s_direction_ball_y = UP;
+                    } else if (s_direction_cpu == DOWN) {
+                        s_direction_ball_y = DOWN;
+                    }
+                }
+            }
+
+            // Handling collision with top and bottom wall respectively
+            if (s_position_ball_y <= 0) {
+                s_direction_ball_y = DOWN;
+            }
+            if (s_position_ball_y >= GAME_HEIGHT) {
+                s_direction_ball_y = UP;
+            }
+
+            // When ball crosses left or right side of screen and someone scores
+            if (s_position_ball_x < -20) {
+                s_position_ball_x = GAME_WIDTH/2;
+                s_position_ball_y = SDL_rand(GAME_HEIGHT);
+                s_component_ball_x = SDL_randf();
                 s_direction_ball_x = UP;
-                // Change direction of ball to direction of paddle
-                if (s_direction_cpu == UP) {
-                    s_direction_ball_y = UP;
-                } else if (s_direction_cpu == DOWN) {
-                    s_direction_ball_y = DOWN;
-                }
+                SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+                s_score_cpu++;
+            }
+
+            if (s_position_ball_x > GAME_WIDTH + 10) {
+                s_position_ball_x = GAME_WIDTH/2;
+                s_position_ball_y = SDL_rand(GAME_HEIGHT);
+                s_component_ball_x = SDL_randf();
+                s_direction_ball_x = UP;
+                SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
+                s_score_player++;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 16, 24, 32, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(renderer, &background);
+
+            // Rendering paddles and ball
+            SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(renderer, &paddle_player);
+            SDL_RenderFillRect(renderer, &paddle_cpu);
+
+            SDL_SetRenderDrawColor(renderer, 233, 75, 60, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(renderer, &ball);
+
+            // Display scores
+            SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+            SDL_SetRenderDrawColor(renderer, 151, 188, 98, SDL_ALPHA_OPAQUE);
+            SDL_RenderDebugTextFormat(renderer, GAME_WIDTH/4, 100, "%d", s_score_player);
+            SDL_RenderDebugTextFormat(renderer, 3*GAME_WIDTH/4, 100, "%d", s_score_cpu);
+
+            // Middle partition
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            for (int i = 0; i < GAME_HEIGHT; i += 10) {
+                SDL_RenderPoint(renderer, GAME_WIDTH/2, i);
             }
         }
-
-        // Handling collision with top and bottom wall respectively
-        if (s_position_ball_y <= 0) {
-            s_direction_ball_y = DOWN;
-        }
-        if (s_position_ball_y >= GAME_HEIGHT) {
-            s_direction_ball_y = UP;
-        }
-
-        // When ball crosses left or right side of screen and someone scores
-        if (s_position_ball_x < -20) {
-            s_position_ball_x = GAME_WIDTH/2;
-            s_position_ball_y = SDL_rand(GAME_HEIGHT);
-            s_component_ball_x = SDL_randf();
-            s_direction_ball_x = UP;
-            SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
-            s_score_cpu++;
-        }
-
-        if (s_position_ball_x > GAME_WIDTH + 10) {
-            s_position_ball_x = GAME_WIDTH/2;
-            s_position_ball_y = SDL_rand(GAME_HEIGHT);
-            s_component_ball_x = SDL_randf();
-            s_direction_ball_x = UP;
-            SDL_PutAudioStreamData(sounds[1].stream, sounds[1].wav_data, (int) sounds[1].wav_data_len);
-            s_score_player++;
-        }
-
-        SDL_SetRenderDrawColor(renderer, 16, 24, 32, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &background);
-
-        // Rendering paddles and ball
-        SDL_SetRenderDrawColor(renderer, 242, 170, 76, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &paddle_player);
-        SDL_RenderFillRect(renderer, &paddle_cpu);
-
-        SDL_SetRenderDrawColor(renderer, 233, 75, 60, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &ball);
-
-        // Display scores
-        SDL_SetRenderScale(renderer, 1.0f, 1.0f);
-        SDL_SetRenderDrawColor(renderer, 151, 188, 98, SDL_ALPHA_OPAQUE);
-        SDL_RenderDebugTextFormat(renderer, GAME_WIDTH/4, 100, "%d", s_score_player);
-        SDL_RenderDebugTextFormat(renderer, 3*GAME_WIDTH/4, 100, "%d", s_score_cpu);
-
-        // Middle partition
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-        for (int i = 0; i < GAME_HEIGHT; i += 10) {
-            SDL_RenderPoint(renderer, GAME_WIDTH/2, i);
-        }
+        break;
+        
+        default:
+            SDL_Log("Invalid window choice!");
     }
 
     last_time = now;
